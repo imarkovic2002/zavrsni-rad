@@ -17,10 +17,9 @@ Projekt je podijeljen u nekoliko dijelova:
 ## Instalacija i pokretanje
 1. Klonirajte repozitorij:
    ```bash
-    git clone https://github.com/imarkovic2002/Pomodoro_aplikacija-Zavrsni_rad
-    ```
+    git clone https://github.com/imarkovic2002/zavrsni-rad
 
-2. Otvorite `PomoMind-99.html` u web pregledniku za pokretanje aplikacije.
+
 
 ## Mentor
 - **Izv. prof. Sven Maričić**
