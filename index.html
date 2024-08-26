@@ -1,0 +1,4162 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pomodoro Timer and Mind Map</title>
+
+    <!-- CSS Module -->
+    <style>
+      /* Basic CSS styling for the entire application */
+      body,
+      html {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        font-family: "Roboto", sans-serif;
+        background-color: #121212;
+        color: #e0e0e0;
+        overflow: hidden;
+      }
+
+      .app-container {
+        display: flex;
+        width: 100%;
+        height: 100%;
+        padding: 20px;
+        box-sizing: border-box;
+      }
+
+      .app-section {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        background: #1e1e1e;
+        border-radius: 10px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+        padding: 20px;
+        box-sizing: border-box;
+        height: 100%;
+      }
+
+      #pomodoro-section {
+        text-align: center;
+        padding: 40px;
+        background: #1e1e1e;
+        border-radius: 10px;
+        box-shadow: 0 5 20px rgba(0, 0, 0, 0.5);
+        flex: 1;
+        width: 100%;
+        height: 100vh;
+        overflow: hidden;
+      }
+
+      #mindmap-section {
+        display: flex;
+        width: 100%;
+        padding: 0;
+        margin: 0;
+        flex: 1;
+        display: none;
+        height: 100vh;
+        overflow: hidden;
+      }
+
+      #mindmap-3d-section {
+        width: 100%;
+        padding: 0;
+        margin: 0;
+        flex: 1;
+        display: flex;
+        height: 100vh;
+        overflow: hidden;
+      }
+
+      .timer-controls {
+        margin-bottom: 20px;
+      }
+      .action-button,
+      .popup-button {
+        padding: 10px 20px;
+        border: none;
+        background-color: #007bff;
+        color: white;
+        margin: 5px;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 16px;
+        transition: background-color 0.3s, transform 0.3s;
+      }
+      .action-button:hover,
+      .popup-button:hover {
+        background-color: #0056b3;
+        transform: scale(1.05);
+      }
+      .timer-display {
+        font-size: 48px;
+        margin: 20px 0;
+        font-weight: bold;
+      }
+      input[type="text"],
+      input[type="checkbox"],
+      .popup,
+      .confirm-popup {
+        padding: 10px;
+        border-radius: 5px;
+        border: none;
+        margin-bottom: 5px;
+        width: 120px;
+      }
+      input[type="text"] {
+        background-color: #252525;
+        color: #e0e0e0;
+        border: 1px solid #333;
+        padding: 10px;
+        border-radius: 5px;
+      }
+      .popup,
+      .confirm-popup {
+        position: fixed;
+        width: 300px;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background-color: #333;
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.7);
+        display: none;
+        flex-direction: column;
+        padding: 20px;
+        z-index: 1001;
+      }
+      .close-btn {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        font-size: 20px;
+        color: #fff;
+        cursor: pointer;
+        border: none;
+        background: none;
+      }
+
+      .tasks {
+        list-style-type: none;
+        text-align: center;
+        padding: 0;
+        width: 60%;
+        max-height: 400px;
+        overflow-y: auto;
+        padding: 10px;
+      }
+
+      .tasks li {
+        margin-bottom: 10px;
+        display: flex;
+        align-items: center;
+        background-color: #2e2e2e;
+        padding: 8px;
+        border-radius: 8px;
+        transition: background-color 0.3s, box-shadow 0.3s;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        white-space: normal;
+        overflow: visible;
+        font-size: 10px;
+      }
+
+      .tasks li:hover {
+        background-color: #3d3d3d;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+      }
+
+      .task-manager {
+        display: flex;
+        text-align: center;
+        flex-direction: column;
+        align-items: center;
+        width: 98%;
+        height: calc(100vh - 160px);
+        overflow-y: auto;
+      }
+
+      #task-input,
+      #add-task {
+        width: 70%;
+        max-width: 500px;
+        margin: 5px 2px;
+      }
+
+      #add-task {
+        width: auto;
+        margin-left: auto;
+        margin-right: auto;
+      }
+
+      .task-content {
+        display: flex;
+        align-items: center;
+        flex-grow: 1;
+        margin-right: 2px;
+        white-space: normal;
+      }
+
+      .task-text {
+        margin-left: 10px;
+        flex-grow: 1;
+        white-space: normal;
+        overflow: visible;
+        font-size: 10px;
+      }
+
+      .task-actions {
+        display: flex;
+        align-items: center;
+      }
+
+      .subtasks {
+        list-style-type: none;
+        padding-left: 20px;
+      }
+
+      .subtask-item {
+        display: flex;
+        align-items: center;
+        background-color: #3d3d3d;
+        padding: 3px 6px;
+        border-radius: 6px;
+        margin-top: 3px;
+      }
+
+      .add-subtask {
+        padding: 3px 6px;
+        font-size: 12px;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        margin-left: 5px;
+        transition: background-color 0.3s, transform 0.3s;
+      }
+
+      .add-subtask:hover {
+        background-color: #0056b3;
+        transform: scale(1.05);
+      }
+
+      .checked-task {
+        color: #ffd700;
+        text-decoration: line-through;
+      }
+      .overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.7);
+        display: none;
+        z-index: 1000;
+      }
+      .segment {
+        cursor: pointer;
+        transition: fill 0.3s;
+        stroke: #333;
+        stroke-width: 0.5;
+      }
+      .legend-item {
+        display: flex;
+        align-items: center;
+        margin-bottom: 5px;
+      }
+      .legend-color {
+        width: 20px;
+        height: 20px;
+        margin-right: 5px;
+        border: 1px solid #000;
+      }
+      svg {
+        height: 100%;
+        width: 100%;
+      }
+      .footer {
+        position: absolute;
+        bottom: 10px;
+        right: 20px;
+      }
+      .footer .action-button {
+        margin: 0 5px;
+      }
+
+      .round-button {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        width: 50px;
+        height: 50px;
+        background-color: rgba(255, 255, 255, 0.3);
+        border: none;
+        border-radius: 50%;
+        cursor: pointer;
+        z-index: 1001;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 24px;
+        color: #fff;
+        opacity: 22%;
+      }
+
+      .functionalities-container {
+        display: none;
+        position: absolute;
+        top: 70px;
+        left: 10px;
+        background-color: #1e1e1e;
+        border: 1px solid #333;
+        border-radius: 5px;
+        padding: 10px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+        z-index: 1002;
+        color: #e0e0e0;
+        opacity: 70%;
+      }
+
+      .functionalities-container ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+      }
+
+      .functionalities-container ul li {
+        margin: 5px 0;
+      }
+
+      /* CSS code for 3D mindmaping */
+      canvas {
+        display: block;
+        width: 100%;
+        height: 100%;
+      }
+
+      .label {
+        color: #fff;
+        background: rgba(0, 0, 0, 0.5);
+        padding: 2px 8px;
+        border-radius: 4px;
+        pointer-events: auto;
+      }
+
+      #changeDescriptionButton {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        z-index: 10;
+        padding: 10px;
+        background: #fff;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- HTML Structure Module -->
+    <div
+      class="overlay"
+      onclick="toggleSettings(false); toggleEInkPopup(false);"></div>
+    <div class="app-container">
+      <div id="pomodoro-section" class="app-section">
+        <div class="timer-controls">
+          <button class="action-button" id="pomodoro">Pomodoro</button>
+          <button class="action-button" id="short-break">Short Break</button>
+          <button class="action-button" id="long-break">Long Break</button>
+          <div class="timer-display" id="time-left">25:00</div>
+          <button class="action-button" id="start-stop">START</button>
+          <button class="action-button" id="reset">RESET</button>
+          <button class="action-button" id="settings">Settings</button>
+        </div>
+
+        <div class="popup" id="settings-popup">
+          <span class="close-btn" onclick="toggleSettings(false)">&times;</span>
+          <button class="action-button" onclick="setCustomTimer()">
+            Custom Timer
+          </button>
+          <button class="action-button" onclick="saveTasksToFile()">
+            Save Tasks
+          </button>
+          <button class="action-button" onclick="loadTasksFromFile()">
+            Load Tasks
+          </button>
+          <button class="action-button" onclick="testSound()">Sound</button>
+          <button
+            class="action-button"
+            id="e-ink-button"
+            onclick="toggleEInkPopup(true)">
+            e-Ink
+          </button>
+          <div id="category-container">
+            <input type="text" id="category1" placeholder="Category 1 Name" />
+          </div>
+          <button class="action-button" id="add-category">Add Category</button>
+          <button class="action-button" onclick="updateCategories()">
+            Update Categories
+          </button>
+          <button class="action-button" id="fullscreen-toggle">
+            Full Screen
+          </button>
+        </div>
+
+        <div class="confirm-popup" id="e-ink-confirm-popup">
+          <p>Apply grayscale filter?</p>
+          <button class="action-button" onclick="applyEInkMode(true)">
+            Yes
+          </button>
+          <button class="action-button" onclick="applyEInkMode(false)">
+            No
+          </button>
+        </div>
+        <div class="task-manager">
+          <input
+            type="text"
+            id="task-input"
+            placeholder="Enter tasks separated by ; (e.g., Task1;Task2)" />
+          <button class="action-button" id="add-task">Add Tasks</button>
+          <ul class="tasks" id="tasks"></ul>
+        </div>
+      </div>
+      <div id="mindmap-section" class="app-section">
+        <svg id="mindmap"></svg>
+      </div>
+      <div id="mindmap-3d-section" class="app-section" style="display: none">
+        <input type="file" id="fileInput" style="display: none" />
+        <button id="changeDescriptionButton">
+          Change Central Node Description
+        </button>
+        <canvas id="3d-mindmap-canvas"></canvas>
+      </div>
+    </div>
+    <div class="footer">
+      <button class="action-button" onclick="switchTo('pomodoro')">
+        Pomodoro Timer
+      </button>
+      <button class="action-button" onclick="switchTo('mindmap')">
+        Mind Map
+      </button>
+      <button class="action-button" onclick="switchTo('mindmap-3d')">
+        3D Mind Map
+      </button>
+    </div>
+
+    <button class="round-button" onclick="toggleFunctionalities()">i</button>
+    <div class="functionalities-container" id="functionalities-container">
+      <p>List of commands:</p>
+      <ul>
+        <li>CTRL + left click (mindmap) -> create a new node</li>
+        <li>Right click (mindmap) -> create a new subchild</li>
+        <li>SHIFT + left click (mindmap) -> delete a node/subchild</li>
+        <li>
+          Left click (on circles in mindmap) -> minimize/maximize node/subchild
+        </li>
+        <br />
+        <li>
+          Double left click (on task or subtask in Pomodoro timer) -> rename
+          text
+        </li>
+        <li>CTRL + S -> Save tasks</li>
+        <li>CTRL + O -> Open a specific task</li>
+        <li>ALT + P -> set timer to Pomodoro</li>
+        <li>ALT + L -> set timer to Long break</li>
+        <li>ALT + S -> set timer to Short break</li>
+        <li>ALT + R -> reset timer</li>
+        <li>
+          Enter tasks separated by ';' in the task input field -> Adds multiple
+          tasks
+        </li>
+        <li>
+          <br />
+          Ctrl + Left-click in empty space (3D Mind Map) -> Creates a new node
+        </li>
+        <li>Alt + Left-click on a node (3D Mind Map) -> Creates a subnode</li>
+        <li>
+          Shift + Left-click on a node (3D Mind Map) -> Deletes the node
+          (exceptfor the Central Node)
+        </li>
+        <br />
+        <li>ALT + F1 -> Toggles the functionalities container</li>
+        <li>F11 -> Toggles fullscreen mode</li>
+      </ul>
+      <button class="close-btn" onclick="toggleFunctionalities()">x</button>
+    </div>
+
+    <!-- JavaScript Modules -->
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/markmap@0.10.0/lib/markmap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/renderers/CSS2DRenderer.js"></script>
+
+    <!-- Configuration and Initialization Module -->
+    <script>
+      // Variables to store categories and renamed tasks/subtasks
+      let categories = {};
+      let renamedTasks = {};
+      let renamedSubtasks = {};
+
+      let oscillator;
+      let gainNode;
+      let repeatCount = 2;
+
+      // Pomodoro Functionality Module
+
+      let timer;
+      let timerDuration = 25 * 60;
+      let isTimerRunning = false;
+      let audioContext = new (window.AudioContext ||
+        window.webkitAudioContext)();
+      let currentSound = { type: "square", frequency: 440 };
+
+      // Function to set the timer duration
+      function setTimer(type) {
+        switch (type) {
+          case "pomodoro":
+            timerDuration = 25 * 60;
+            break;
+          case "short-break":
+            timerDuration = 5 * 60;
+            break;
+          case "long-break":
+            timerDuration = 15 * 60;
+            break;
+        }
+        document.getElementById("time-left").textContent =
+          formatTime(timerDuration);
+        document.title = `${formatTime(timerDuration)} - Pomodoro Timer`;
+      }
+
+      // Function to set a custom timer duration
+      function setCustomTimer() {
+        let customTime = parseInt(prompt("Enter custom minutes:", "25"));
+        if (!customTime) return;
+        timerDuration = customTime * 60;
+        document.getElementById("time-left").textContent =
+          formatTime(timerDuration);
+        document.title = `${formatTime(timerDuration)} - Pomodoro Timer`;
+      }
+
+      // Function to test the sound settings
+      function testSound() {
+        const type = prompt(
+          "Enter sound type (sine, square, triangle, sawtooth):",
+          currentSound.type
+        );
+        if (type === null) return;
+        const frequencyInput = prompt(
+          "Enter frequency (Hz):",
+          currentSound.frequency
+        );
+        if (frequencyInput === null) return;
+        const frequency = parseInt(frequencyInput);
+        if (isNaN(frequency)) {
+          alert("Invalid frequency input");
+          return;
+        }
+        const repeatCountInput = prompt(
+          "Enter repeat count (1-5):",
+          repeatCount
+        );
+        if (repeatCountInput === null) return;
+        const repeatCountValue = parseInt(repeatCountInput);
+        if (isNaN(repeatCountValue)) {
+          alert("Invalid repeat count input");
+          return;
+        }
+        repeatCount = Math.max(1, Math.min(5, repeatCountValue));
+        currentSound = { type, frequency };
+        beep(repeatCount, currentSound.type, currentSound.frequency);
+      }
+
+      // Function to format time in minutes and seconds
+      function formatTime(seconds) {
+        const minutes = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        return `${minutes}:${secs < 10 ? "0" : ""}${secs}`;
+      }
+
+      // Function to play a beep sound
+      function beep(times = 2, type = "square", frequency = 440) {
+        return new Promise((resolve) => {
+          const audioContext = new (window.AudioContext ||
+            window.webkitAudioContext)();
+          function beepOnce(timesRemaining) {
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            gainNode.gain.value = 0.1;
+            oscillator.frequency.value = frequency;
+            oscillator.type = type;
+            oscillator.start();
+            setTimeout(() => {
+              oscillator.stop();
+              if (timesRemaining > 1) {
+                setTimeout(() => beepOnce(timesRemaining - 1), 200);
+              } else {
+                resolve();
+              }
+            }, 200);
+          }
+          beepOnce(times);
+        });
+      }
+
+      // Function to stop the beep sound
+      function stopBeep() {
+        if (oscillator) {
+          oscillator.stop();
+          oscillator.disconnect();
+          gainNode.disconnect();
+          oscillator = null;
+          gainNode = null;
+        }
+      }
+
+      // Function to reset the timer
+      function resetTimer() {
+        clearInterval(timer);
+        isTimerRunning = false;
+        document.getElementById("start-stop").textContent = "START";
+        setTimer("pomodoro");
+      }
+
+      // Function to toggle the timer state
+      function toggleTimer() {
+        if (isTimerRunning) {
+          clearInterval(timer);
+          isTimerRunning = false;
+          document.getElementById("start-stop").textContent = "START";
+        } else {
+          timer = setInterval(() => {
+            if (timerDuration > 0) {
+              timerDuration--;
+              document.getElementById("time-left").textContent =
+                formatTime(timerDuration);
+              document.title = `${formatTime(timerDuration)} - Pomodoro Timer`;
+            } else {
+              clearInterval(timer);
+              isTimerRunning = false;
+              document.getElementById("start-stop").textContent = "START";
+              document.title = "Time's up! - Pomodoro Timer";
+              beep(repeatCount, currentSound.type, currentSound.frequency).then(
+                () => {
+                  alert("Time's up!");
+                }
+              );
+            }
+          }, 1000);
+          isTimerRunning = true;
+          document.getElementById("start-stop").textContent = "STOP";
+        }
+      }
+
+      // Function to save tasks to a file
+      function saveTasksToFile() {
+        const tasksList = document.getElementById("tasks");
+        const tasks = [];
+        tasksList.childNodes.forEach((task) => {
+          const taskText = task.querySelector(".task-text").textContent;
+          const completed = task.querySelector(
+            "input[type='checkbox']"
+          ).checked;
+          const subtasks = Array.from(
+            task.querySelector(".subtasks").children
+          ).map(
+            (subtask) => subtask.querySelector(".subtask-text").textContent
+          );
+          const category = task.querySelector(".task-category").value;
+          const timestamp = task.querySelector(".task-timestamp").textContent;
+          tasks.push({
+            text: taskText,
+            completed: completed,
+            subtasks: subtasks,
+            category: category,
+            timestamp: timestamp,
+          });
+        });
+
+        const data = {
+          tasks: tasks,
+          categories: categories,
+          mindMap: rootNode,
+          nodes: nodes.map((node) => ({
+            x: node.x,
+            y: node.y,
+            z: node.z,
+            text: node.text,
+            parent: node.parent
+              ? nodes.indexOf(nodes.find((n) => n.mesh === node.parent))
+              : null,
+            color: node.color,
+            size: node.size,
+          })),
+          lines: lines.map((line) => ({
+            startNode: nodes.indexOf(nodes.find((n) => n.mesh === line.node1)),
+            endNode: nodes.indexOf(nodes.find((n) => n.mesh === line.node2)),
+            color: line.line.material.color.getHex(),
+          })),
+        };
+
+        const jsonString = JSON.stringify(data);
+        const blob = new Blob([jsonString], { type: "application/json" });
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = "all_data.json";
+        link.click();
+      }
+
+      // Function to load tasks from a file
+      function loadTasksFromFile() {
+        const input = document.createElement("input");
+        input.type = "file";
+        input.accept = ".json";
+        input.onchange = (e) => {
+          const file = e.target.files[0];
+          const reader = new FileReader();
+          reader.onload = (event) => {
+            const data = JSON.parse(event.target.result);
+
+            // Load categories
+            const newCategories = data.categories || {};
+            categories = { ...categories, ...newCategories };
+            const categoryContainer =
+              document.getElementById("category-container");
+            categoryContainer.innerHTML = "";
+            for (let category in categories) {
+              const categoryInput = document.createElement("input");
+              categoryInput.type = "text";
+              categoryInput.value = category;
+              categoryContainer.appendChild(categoryInput);
+            }
+            const categoryInput = document.createElement("input");
+            categoryInput.type = "text";
+            categoryInput.placeholder = "Add new category";
+            categoryContainer.appendChild(categoryInput);
+
+            // Load tasks
+            const tasksList = document.getElementById("tasks");
+            data.tasks.forEach((task) => {
+              const existingTask = Array.from(tasksList.childNodes).find(
+                (li) => li.querySelector(".task-text").textContent === task.text
+              );
+              if (!existingTask) {
+                const formattedTimestamp = task.timestamp
+                  ? ` ${task.timestamp.replace(" ", "")}`
+                  : "";
+                createTaskElement(
+                  task.text,
+                  tasksList,
+                  task.completed,
+                  formattedTimestamp,
+                  task.category
+                );
+                task.subtasks.forEach((subtask) => {
+                  const parentLi = Array.from(tasksList.childNodes).find(
+                    (li) =>
+                      li.querySelector(".task-text").textContent === task.text
+                  );
+                  if (parentLi) {
+                    createSubtaskElement(
+                      subtask,
+                      parentLi.querySelector(".subtasks")
+                    );
+                  }
+                });
+              }
+            });
+
+            // Load 2D mind map
+            rootNode = data.mindMap || rootNode;
+            if (mindMapInitialized) {
+              mm.setData(rootNode);
+              mm.fit();
+            }
+
+            // Load 3D mind map
+            loadScene(data.nodes, data.lines);
+
+            updateTaskCategoryDropdowns();
+          };
+          reader.readAsText(file);
+        };
+        input.click();
+      }
+
+      // Function to add tasks to the task list
+      function addTasks(taskInput) {
+        const tasksList = document.getElementById("tasks");
+        const tasks = taskInput.split(";");
+        tasks.forEach((task) => {
+          if (task.trim() !== "") {
+            synchronizeTask(task.trim(), "pomodoro");
+          }
+        });
+        document.getElementById("task-input").value = "";
+      }
+
+      // Function to add a subtask to a task
+      function addSubtask(subtasksList, parentTask) {
+        const subtaskText = prompt("Enter subtask:");
+        if (!subtaskText) return;
+
+        // Check if the parentTask is the "Central Node" or a subtask itself
+        if (parentTask === rootNode.content) {
+          alert("You cannot add subtasks to the Central Node.");
+          return;
+        }
+        const parentTaskElement = Array.from(
+          document.querySelectorAll(".task-text")
+        ).find((task) => task.textContent === parentTask);
+        const isSubtask =
+          parentTaskElement && parentTaskElement.closest(".subtask-item");
+
+        if (isSubtask) {
+          alert("Subtasks cannot have new subnodes.");
+          return;
+        }
+
+        // Check if subtask already exists
+        const existingSubtask = Array.from(subtasksList.children).find(
+          (subtask) =>
+            subtask.querySelector(".subtask-text").textContent === subtaskText
+        );
+        if (existingSubtask) {
+          alert("Subtask already exists.");
+          return;
+        }
+
+        createSubtaskElement(subtaskText, subtasksList);
+
+        parentTask = getUpdatedTaskDescription(parentTask);
+        const parentNode = findNodeByContent(rootNode, parentTask);
+        if (parentNode) {
+          const newSubchild = { content: subtaskText, children: [] };
+          parentNode.children.push(newSubchild);
+          if (mindMapInitialized) {
+            mm.setData(rootNode);
+            mm.fit();
+          }
+        }
+
+        // Prevent adding the same task to the mind map
+        const existingNode = findNodeByContent(rootNode, subtaskText);
+        if (!existingNode) {
+          synchronizeTask(subtaskText, "pomodoro", parentTask);
+        }
+
+        // Synchronize with 3D Mind Map
+        synchronize3DMindMap(subtaskText, parentTask);
+      }
+
+      // Function to handle adding a new task
+      function handleAddTask() {
+        const inputField = document.getElementById("task-input");
+        if (inputField.value.trim() === "") {
+          loadTasksFromFile();
+        } else {
+          const tasks = inputField.value.split(";");
+          tasks.forEach((task) => {
+            if (task.trim() !== "") {
+              synchronizeTask(task.trim(), "pomodoro");
+            }
+          });
+          inputField.value = "";
+        }
+      }
+
+      // Function to create a task element in the task list
+      function createTaskElement(
+        taskDescription,
+        tasksList,
+        completed = false,
+        timestamp = null,
+        category = null
+      ) {
+        const li = document.createElement("li");
+        li.className = "task-item";
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.checked = completed;
+        checkbox.onchange = handleCheck;
+
+        const textNode = document.createElement("span");
+        textNode.textContent = taskDescription;
+        textNode.className = "task-text";
+
+        const timestampNode = document.createElement("span");
+        timestamp = timestamp ? timestamp : formatDate(new Date());
+        timestampNode.textContent = timestamp ? `${timestamp} ` : "";
+        timestampNode.className = "task-timestamp";
+
+        const categorySelect = document.createElement("select");
+        categorySelect.className = "task-category";
+        for (let categoryName in categories) {
+          const option = document.createElement("option");
+          option.value = categoryName;
+          option.textContent = categoryName;
+          categorySelect.appendChild(option);
+        }
+        if (category) {
+          categorySelect.value = category;
+        }
+
+        const taskContent = document.createElement("div");
+        taskContent.className = "task-content";
+        taskContent.appendChild(textNode);
+        taskContent.appendChild(timestampNode);
+        taskContent.appendChild(checkbox);
+        taskContent.appendChild(categorySelect);
+
+        const subtasksList = document.createElement("ul");
+        subtasksList.className = "subtasks";
+
+        const taskActions = document.createElement("div");
+        taskActions.className = "task-actions";
+
+        const moveUpBtn = document.createElement("button");
+        moveUpBtn.textContent = "↑";
+        moveUpBtn.onclick = () => {
+          moveTaskUp(li);
+          synchronizeTaskOrder(taskDescription, -1);
+        };
+
+        const moveDownBtn = document.createElement("button");
+        moveDownBtn.textContent = "↓";
+        moveDownBtn.onclick = () => {
+          moveTaskDown(li);
+          synchronizeTaskOrder(taskDescription, 1);
+        };
+
+        const deleteBtn = document.createElement("button");
+        deleteBtn.textContent = "X";
+        deleteBtn.onclick = () => {
+          deleteTaskInPomodoro(taskDescription);
+        };
+
+        const addSubtaskBtn = document.createElement("button");
+        addSubtaskBtn.className = "add-subtask";
+        addSubtaskBtn.textContent = "+ Subtask";
+        addSubtaskBtn.onclick = () => addSubtask(subtasksList, taskDescription);
+
+        taskActions.append(moveUpBtn, moveDownBtn, deleteBtn, addSubtaskBtn);
+        li.append(taskContent, subtasksList, taskActions);
+        tasksList.appendChild(li);
+
+        textNode.ondblclick = () => editTask(taskDescription, li, textNode);
+        if (completed) {
+          textNode.classList.add("checked-task");
+          tasksList.appendChild(li);
+          moveTaskToEndInMindMap(taskDescription);
+        }
+      }
+
+      // Function to create a subtask element in the task list
+      function createSubtaskElement(subtaskDescription, subtasksList) {
+        const subtaskItem = document.createElement("li");
+        subtaskItem.className = "subtask-item";
+
+        const textNode = document.createElement("span");
+        textNode.textContent = subtaskDescription;
+        textNode.className = "subtask-text";
+
+        const deleteSubtaskBtn = document.createElement("button");
+        deleteSubtaskBtn.textContent = "Delete";
+        deleteSubtaskBtn.onclick = () => {
+          subtaskItem.remove();
+          deleteSubtaskInPomodoro(subtaskDescription);
+        };
+
+        subtaskItem.appendChild(textNode);
+        subtaskItem.appendChild(deleteSubtaskBtn);
+        subtasksList.appendChild(subtaskItem);
+
+        textNode.ondblclick = () =>
+          editSubtask(subtaskDescription, subtaskItem);
+      }
+
+      document.querySelectorAll(".subtask-text").forEach((node) => {
+        const clone = node.cloneNode(true);
+        node.parentNode.replaceChild(clone, node);
+        clone.ondblclick = () =>
+          editSubtask(clone.textContent, clone.parentElement);
+      });
+
+      // Function to edit a task's description
+      function editTask(oldTaskDescription, taskElement, textNode) {
+        const newTaskDescription = prompt(
+          "Enter new task text:",
+          oldTaskDescription
+        );
+        if (newTaskDescription && newTaskDescription.trim() !== "") {
+          synchronizeTaskUpdate(oldTaskDescription, newTaskDescription);
+          textNode.textContent = newTaskDescription;
+        }
+      }
+
+      // Function to edit a subtask's description
+      function editSubtask(oldSubtaskDescription, subtaskElement) {
+        const latestDescription = getUpdatedSubtaskDescription(
+          oldSubtaskDescription
+        );
+        const newSubtaskDescription = prompt(
+          "Enter new subtask text:",
+          latestDescription
+        );
+        if (newSubtaskDescription && newSubtaskDescription.trim() !== "") {
+          subtaskElement.querySelector(".subtask-text").textContent =
+            newSubtaskDescription;
+          synchronizeSubtaskUpdate(latestDescription, newSubtaskDescription);
+        }
+      }
+
+      //Replaces a task description with its updated version using a renaming dictionary
+      function getUpdatedTaskDescription(taskDescription) {
+        while (renamedTasks[taskDescription]) {
+          taskDescription = renamedTasks[taskDescription];
+        }
+        return taskDescription;
+      }
+
+      //Replaces a subtask description with its updated version using a renaming dictionary
+      function getUpdatedSubtaskDescription(subtaskDescription) {
+        while (renamedSubtasks[subtaskDescription]) {
+          subtaskDescription = renamedSubtasks[subtaskDescription];
+        }
+        return subtaskDescription;
+      }
+
+      // Function to delete a task from Pomodoro timer and synchronize with mind map
+      function deleteTaskInPomodoro(taskDescription, fromMindMap = false) {
+        const updatedTaskDescription =
+          getUpdatedTaskDescription(taskDescription);
+
+        const tasksList = document.getElementById("tasks");
+        const taskItem = Array.from(tasksList.childNodes).find(
+          (li) =>
+            li.querySelector(".task-text").textContent ===
+            updatedTaskDescription
+        );
+        if (taskItem) {
+          tasksList.removeChild(taskItem);
+        } else {
+          Array.from(tasksList.childNodes).forEach((taskItem) => {
+            const subtaskItem = Array.from(
+              taskItem.querySelector(".subtasks").childNodes
+            ).find(
+              (subtask) =>
+                subtask.querySelector(".subtask-text").textContent ===
+                updatedTaskDescription
+            );
+            if (subtaskItem) {
+              subtaskItem.parentElement.removeChild(subtaskItem);
+            }
+          });
+        }
+
+        if (!fromMindMap) {
+          deleteMindMapNode(updatedTaskDescription);
+          delete3DNode(updatedTaskDescription);
+        }
+      }
+
+      // Function to delete a subtask from Pomodoro timer and synchronize with mind map
+      function deleteSubtaskInPomodoro(
+        subtaskDescription,
+        fromMindMap = false
+      ) {
+        const updatedSubtaskDescription =
+          getUpdatedSubtaskDescription(subtaskDescription);
+
+        const tasksList = document.getElementById("tasks");
+        Array.from(tasksList.childNodes).forEach((taskItem) => {
+          const subtaskItem = Array.from(
+            taskItem.querySelector(".subtasks").childNodes
+          ).find(
+            (subtask) =>
+              subtask.querySelector(".subtask-text").textContent ===
+              updatedSubtaskDescription
+          );
+          if (subtaskItem) {
+            subtaskItem.parentElement.removeChild(subtaskItem);
+          }
+        });
+
+        if (!fromMindMap) {
+          deleteMindMapNode(updatedSubtaskDescription);
+          delete3DNode(updatedSubtaskDescription);
+        }
+      }
+
+      //Shows or hides a settings popup and an overlay layer
+      function toggleSettings(show) {
+        const settingsPopup = document.getElementById("settings-popup");
+        const overlay = document.querySelector(".overlay");
+        if (show) {
+          settingsPopup.style.display = "flex";
+          overlay.style.display = "block";
+        } else {
+          settingsPopup.style.display = "none";
+          overlay.style.display = "none";
+        }
+      }
+
+      //Displays or hides an E-Ink confirmation popup and its corresponding overlay layer
+      function toggleEInkPopup(show) {
+        const eInkPopup = document.getElementById("e-ink-confirm-popup");
+        const overlay = document.querySelector(".overlay");
+        if (show) {
+          eInkPopup.style.display = "flex";
+          overlay.style.display = "block";
+        } else {
+          eInkPopup.style.display = "none";
+          overlay.style.display = "none";
+        }
+      }
+
+      //Enables or disables the E-Ink mode by applying a grayscale filter to the body of the document
+      function applyEInkMode(apply) {
+        if (apply) {
+          document.body.style.filter = "grayscale(100%)";
+        } else {
+          document.body.style.filter = "none";
+        }
+        toggleEInkPopup(false);
+      }
+
+      function toggleFunctionalities() {
+        const functionalitiesContainer = document.getElementById(
+          "functionalities-container"
+        );
+        functionalitiesContainer.style.display =
+          functionalitiesContainer.style.display === "block" ? "none" : "block";
+      }
+
+      function toggleFullscreen() {
+        if (!document.fullscreenElement) {
+          document.documentElement.requestFullscreen();
+        } else {
+          if (document.exitFullscreen) {
+            document.exitFullscreen();
+          }
+        }
+      }
+
+      document
+        .getElementById("fullscreen-toggle")
+        .addEventListener("click", toggleFullscreen);
+
+      const pomodoroSection = document.getElementById("pomodoro-section");
+      const mindmapSection = document.getElementById("mindmap-section");
+
+      let isResizing = false;
+
+      // Event listener to add a new category
+      document
+        .getElementById("add-category")
+        .addEventListener("click", addCategory);
+
+      // Function to add a new category input field
+      function addCategory() {
+        const categoryContainer = document.getElementById("category-container");
+        const categoryCount = categoryContainer.children.length;
+        const newCategoryInput = document.createElement("input");
+        newCategoryInput.type = "text";
+        newCategoryInput.id = `category${categoryCount + 1}`;
+        newCategoryInput.placeholder = `Category ${categoryCount + 1} Name`;
+        categoryContainer.appendChild(newCategoryInput);
+        newCategoryInput.focus();
+      }
+
+      // Function to update categories from input fields
+      function updateCategories() {
+        const categoryContainer = document.getElementById("category-container");
+        const categoryInputs = categoryContainer.getElementsByTagName("input");
+        categories = {};
+        for (let input of categoryInputs) {
+          if (input.value.trim() !== "") {
+            categories[input.value.trim()] = input.value.trim();
+          }
+        }
+        updateTaskCategoryDropdowns();
+      }
+
+      // Function to refresh task category dropdowns
+      function updateTaskCategoryDropdowns() {
+        const tasks = document.getElementsByClassName("task-item");
+        for (let task of tasks) {
+          const categorySelect = task.querySelector(".task-category");
+          const currentCategory = categorySelect.value;
+          categorySelect.innerHTML = "";
+          for (let category in categories) {
+            const option = document.createElement("option");
+            option.value = category;
+            option.textContent = category;
+            categorySelect.appendChild(option);
+          }
+          if (currentCategory) {
+            categorySelect.value = currentCategory;
+          }
+        }
+      }
+
+      // Function for date format
+      function formatDate(date) {
+        const options = {
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit",
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+          hour12: false,
+        };
+        const localeDate = new Date(date).toLocaleString("en-GB", options);
+
+        const [datePart, timePart] = localeDate.split(", ");
+        const [day, month, year] = datePart.split("/");
+        const formattedDate = `${year}-${month}-${day}, ${timePart}`;
+
+        return formattedDate;
+      }
+
+      // Function to move a task up in the task list
+      function moveTaskUp(task) {
+        const previous = task.previousElementSibling;
+        if (previous) {
+          task.parentNode.insertBefore(task, previous);
+        }
+      }
+
+      // Function to move a task down in the task list
+      function moveTaskDown(task) {
+        const next = task.nextElementSibling;
+        if (next) {
+          task.parentNode.insertBefore(next, task);
+        }
+      }
+
+      // End of Pomodoro timer module
+
+      // Function to switch between Pomodoro, Mind Map, and 3D Mind Map sections
+      function switchTo(section) {
+        const pomodoroSection = document.getElementById("pomodoro-section");
+        const mindmapSection = document.getElementById("mindmap-section");
+        const mindmap3DSection = document.getElementById("mindmap-3d-section");
+
+        // Hide all sections initially
+        pomodoroSection.style.display = "none";
+        mindmapSection.style.display = "none";
+        mindmap3DSection.style.display = "none";
+
+        pomodoroSection.style.width = "100%";
+
+        if (section === "mindmap") {
+          mindmapSection.style.display = "flex";
+          pomodoroSection.style.display = "flex";
+          pomodoroSection.style.width = "50%";
+          mindmapSection.style.width = "50%";
+          initializeMindMap();
+          mindMapInitialized = true;
+        } else if (section === "pomodoro") {
+          pomodoroSection.style.display = "flex";
+        } else if (section === "mindmap-3d") {
+          mindmap3DSection.style.display = "flex";
+          pomodoroSection.style.display = "flex";
+          pomodoroSection.style.width = "50%";
+          mindmap3DSection.style.width = "50%";
+          initialize3DMindMap();
+          mindmap3dInitialized = true;
+        }
+      }
+
+      // Mind Map Module
+
+      // Initialize root node for mind map
+      let rootNode = {
+        content: "Mind Map Root",
+        children: [],
+      };
+      let mm;
+      let mindMapInitialized = false;
+
+      // Function to initialize mind map
+      function initializeMindMap() {
+        const markmap = window.markmap;
+        const svg = document.querySelector("svg#mindmap");
+
+        while (svg.firstChild) {
+          svg.removeChild(svg.firstChild);
+        }
+
+        mm = markmap.Markmap.create(
+          "svg#mindmap",
+          markmap.deriveOptions(null),
+          rootNode
+        );
+
+        const mindmapSvg = document.getElementById("mindmap");
+
+        mindmapSvg.addEventListener("click", function (event) {
+          if (event.ctrlKey) {
+            const newNodeContent = prompt("Enter new node content:");
+            if (newNodeContent && newNodeContent.trim() !== "") {
+              const newNode = {
+                content: newNodeContent,
+                children: [],
+              };
+              rootNode.children.push(newNode);
+              mm.setData(rootNode);
+              mm.fit();
+              synchronizeTask(newNodeContent, "mindmap");
+              event.stopImmediatePropagation(); // Prevent further handling
+            }
+          }
+        });
+
+        mindmapSvg.addEventListener("contextmenu", function (event) {
+          event.preventDefault();
+          const target = event.target;
+          if (
+            target.tagName.toLowerCase() === "div" &&
+            target.parentNode.tagName.toLowerCase() === "foreignobject"
+          ) {
+            const selectedNode = target.textContent;
+            const selectedParent = rootNode.children.find(
+              (node) => node.content === selectedNode
+            );
+            if (selectedParent) {
+              const newSubchildContent = prompt(
+                `Enter new subchild content for ${selectedNode}:`
+              );
+              if (newSubchildContent && newSubchildContent.trim() !== "") {
+                const newSubchild = {
+                  content: newSubchildContent,
+                  children: [],
+                };
+                selectedParent.children.push(newSubchild);
+                mm.setData(rootNode);
+                mm.fit();
+                synchronizeTask(newSubchildContent, "mindmap", selectedNode);
+                event.stopImmediatePropagation(); // Prevent further handling
+              }
+            }
+          }
+        });
+      }
+
+      // Function to synchronize tasks between mind map and task list
+      function synchronizeTask(task, source, parentTask = null) {
+        if (!mindMap3DInitialized) {
+          initialize3DMindMap();
+        }
+
+        const tasksList = document.getElementById("tasks");
+        const currentTime = formatDate(new Date());
+
+        // Check if task already exists in the tasks list
+        const existingTask = Array.from(tasksList.childNodes).find(
+          (li) => li.querySelector(".task-text").textContent === task
+        );
+
+        // Add task to the Pomodoro timer only if it doesn't exist
+        if (!existingTask) {
+          if (parentTask) {
+            parentTask = renamedTasks[parentTask] || parentTask;
+            const parentTaskElement = Array.from(tasksList.childNodes).find(
+              (li) => li.querySelector(".task-text").textContent === parentTask
+            );
+            if (parentTaskElement) {
+              const subtasksList = parentTaskElement.querySelector(".subtasks");
+              createSubtaskElement(task, subtasksList);
+            }
+          } else {
+            createTaskElement(task, tasksList, false, currentTime);
+          }
+        }
+
+        // Add task to the regular Mind Map only if it doesn't exist
+        const existingNode = findNodeByContent(rootNode, task);
+        if (!existingNode) {
+          const newNodeContent = task;
+          const newNode = { content: newNodeContent, children: [] };
+          if (parentTask) {
+            parentTask = renamedTasks[parentTask] || parentTask;
+            const parentNode = findNodeByContent(rootNode, parentTask);
+            if (parentNode) {
+              parentNode.children.push(newNode);
+            }
+          } else {
+            rootNode.children.push(newNode);
+          }
+          if (mindMapInitialized) {
+            mm.setData(rootNode);
+            mm.fit();
+          }
+        }
+
+        // Add task to the 3D Mind Map only if it doesn't exist
+        const existing3DNode = nodes.find((node) => node.text === task);
+        if (!existing3DNode) {
+          addNodeTo3DMindMap(task, parentTask);
+          if (mindMap3DInitialized) {
+            animate();
+          }
+        }
+      }
+
+      // Function to synchronize updates to a task's description
+      function synchronizeTaskUpdate(oldTask, newTask) {
+        renamedTasks[oldTask] = newTask;
+
+        // Update task in the Pomodoro task list
+        const tasksList = document.getElementById("tasks");
+        const taskItem = Array.from(tasksList.childNodes).find(
+          (li) => li.querySelector(".task-text").textContent === oldTask
+        );
+        if (taskItem) {
+          taskItem.querySelector(".task-text").textContent = newTask;
+          taskItem.querySelector(".task-text").ondblclick = () =>
+            editTask(newTask, taskItem, taskItem.querySelector(".task-text"));
+        }
+
+        // Update task in the regular Mind Map
+        function updateNodeContent(node, oldContent, newContent) {
+          if (node.content === oldContent) {
+            node.content = newContent;
+            return true;
+          }
+          for (const child of node.children) {
+            if (updateNodeContent(child, oldContent, newContent)) {
+              return true;
+            }
+          }
+          return false;
+        }
+        if (
+          updateNodeContent(rootNode, oldTask, newTask) &&
+          mindMapInitialized
+        ) {
+          mm.setData(rootNode);
+          mm.fit();
+        }
+
+        // Update task in the 3D Mind Map
+        const node = nodes.find((n) => n.text === oldTask);
+        if (node) {
+          node.text = newTask;
+          node.label.element.textContent = newTask;
+        }
+      }
+
+      //This function updates the description of a subtask across the Pomodoro task list, the regular Mind Map, and the 3D Mind Map
+      function synchronizeSubtaskUpdate(oldSubtask, newSubtask) {
+        let latestSubtask = getUpdatedSubtaskDescription(oldSubtask);
+        renamedSubtasks[latestSubtask] = newSubtask;
+
+        const tasksList = document.getElementById("tasks");
+        tasksList
+          .querySelectorAll(".subtask-item .subtask-text")
+          .forEach((subtaskNode) => {
+            if (subtaskNode.textContent === latestSubtask) {
+              subtaskNode.textContent = newSubtask;
+              subtaskNode.ondblclick = () =>
+                editSubtask(newSubtask, subtaskNode.parentElement);
+            }
+          });
+
+        function updateSubtaskNodeContent(node, oldContent, newContent) {
+          for (const child of node.children) {
+            if (
+              child.content === oldContent ||
+              child.content === latestSubtask
+            ) {
+              child.content = newContent;
+              return true;
+            }
+            if (updateSubtaskNodeContent(child, oldContent, newContent)) {
+              return true;
+            }
+          }
+          return false;
+        }
+
+        if (
+          updateSubtaskNodeContent(rootNode, oldSubtask, newSubtask) &&
+          mindMapInitialized
+        ) {
+          mm.setData(rootNode);
+          mm.fit();
+        }
+
+        // Update task in the 3D Mind Map
+        const node = nodes.find((n) => n.text === oldSubtask);
+        if (node) {
+          node.text = newSubtask;
+          node.label.element.textContent = newSubtask;
+        }
+      }
+
+      // Function to delete a node from the mind map
+      function deleteMindMapNode(content) {
+        function deleteNode(node, content) {
+          const index = node.children.findIndex(
+            (child) => child.content === content
+          );
+          if (index !== -1) {
+            node.children.splice(index, 1);
+            return true;
+          }
+          for (const child of node.children) {
+            if (deleteNode(child, content)) {
+              return true;
+            }
+          }
+          return false;
+        }
+
+        if (deleteNode(rootNode, content) && mindMapInitialized) {
+          mm.setData(rootNode);
+          mm.fit();
+        }
+
+        // Also delete the node in the 3D Mind Map
+        delete3DNode(content);
+        // Also delete the task in the Pomodoro
+        deleteTaskInPomodoro(content, true);
+      }
+
+      // Searches for a node with a specific content value within a tree structure
+      function findNodeByContent(node, content) {
+        if (node.content === content) {
+          return node;
+        }
+        for (const child of node.children) {
+          const result = findNodeByContent(child, content);
+          if (result) {
+            return result;
+          }
+        }
+        return null;
+      }
+
+      //Merges multiple mind map nodes into a single root node by adding children nodes to it
+      function combineMindMapNodes(newRootNode) {
+        function findNodeByContent(node, content) {
+          if (node.content === content) {
+            return node;
+          }
+          for (const child of node.children) {
+            const result = findNodeByContent(child, content);
+            if (result) {
+              return result;
+            }
+          }
+          return null;
+        }
+
+        function addNodeToRootNode(node, rootNode) {
+          if (!findNodeByContent(rootNode, node.content)) {
+            rootNode.children.push(node);
+          }
+        }
+
+        newRootNode.children.forEach((childNode) => {
+          addNodeToRootNode(childNode, rootNode);
+        });
+      }
+
+      // Function to handle checkbox state change for tasks
+      function handleCheck(event) {
+        const task = event.target.parentElement.parentElement;
+        const tasksList = document.getElementById("tasks");
+        const textNode = task.querySelector(".task-text");
+        const taskDescription = textNode.textContent;
+
+        if (event.target.checked) {
+          textNode.classList.add("checked-task");
+          tasksList.appendChild(task);
+          moveTaskToEndInMindMap(taskDescription);
+        } else {
+          textNode.classList.remove("checked-task");
+          tasksList.insertBefore(task, tasksList.firstChild);
+          moveTaskToBeginningInMindMap(taskDescription);
+        }
+      }
+
+      // Function to synchronize the order of tasks between the task list and mind map
+      function synchronizeTaskOrder(taskDescription, direction) {
+        function findNodeByContent(node, content) {
+          if (node.content === content) {
+            return node;
+          }
+          for (const child of node.children) {
+            const result = findNodeByContent(child, content);
+            if (result) {
+              return result;
+            }
+          }
+          return null;
+        }
+
+        const updatedTaskDescription =
+          renamedTasks[taskDescription] || taskDescription;
+        const taskNode = findNodeByContent(rootNode, updatedTaskDescription);
+        if (taskNode) {
+          const parentNode = rootNode;
+          const index = parentNode.children.indexOf(taskNode);
+          if (index !== -1) {
+            const newIndex = index + direction;
+            if (newIndex >= 0 && newIndex < parentNode.children.length) {
+              parentNode.children.splice(index, 1);
+              parentNode.children.splice(newIndex, 0, taskNode);
+              if (mindMapInitialized) {
+                mm.setData(rootNode);
+                mm.fit();
+              }
+            }
+          }
+        }
+      }
+
+      // Function to move a task to the end in the mind map
+      function moveTaskToEndInMindMap(taskDescription) {
+        function findNodeByContent(node, content) {
+          if (node.content === content) {
+            return node;
+          }
+          for (const child of node.children) {
+            const result = findNodeByContent(child, content);
+            if (result) {
+              return result;
+            }
+          }
+          return null;
+        }
+
+        const taskNode = findNodeByContent(rootNode, taskDescription);
+        if (taskNode) {
+          const parentNode = rootNode;
+          const index = parentNode.children.indexOf(taskNode);
+          if (index !== -1) {
+            parentNode.children.splice(index, 1);
+            parentNode.children.push(taskNode);
+            if (mindMapInitialized) {
+              mm.setData(rootNode);
+              mm.fit();
+            }
+          }
+        }
+      }
+
+      // Function to move a task to the beginning in the mind map
+      function moveTaskToBeginningInMindMap(taskDescription) {
+        function findNodeByContent(node, content) {
+          if (node.content === content) {
+            return node;
+          }
+          for (const child of node.children) {
+            const result = findNodeByContent(child, content);
+            if (result) {
+              return result;
+            }
+          }
+          return null;
+        }
+
+        const taskNode = findNodeByContent(rootNode, taskDescription);
+        if (taskNode) {
+          const parentNode = rootNode;
+          const index = parentNode.children.indexOf(taskNode);
+          if (index !== -1) {
+            parentNode.children.splice(index, 1);
+            parentNode.children.unshift(taskNode);
+            if (mindMapInitialized) {
+              mm.setData(rootNode);
+              mm.fit();
+            }
+          }
+        }
+      }
+
+      //
+      //
+      // 3D Mind Map module
+      //
+      //
+      let camera, scene, renderer, labelRenderer, controls;
+      let nodes = [];
+      let lines = [];
+      let mindMap3DInitialized = false;
+
+      //Generates a random position within a specified range.
+      function getRandomPosition(range, offset) {
+        return Math.random() * range - offset;
+      }
+
+      //Adds a node to the 3D scene.
+      function addNode(
+        x,
+        y,
+        z,
+        text,
+        parent = null,
+        color = Math.random() * 0xffffff,
+        size = { width: 1.5, height: 1, depth: 0.5 }
+      ) {
+        const geometry = new THREE.BoxGeometry(
+          size.width,
+          size.height,
+          size.depth
+        );
+        const material = new THREE.MeshPhongMaterial({ color: color });
+        const node = new THREE.Mesh(geometry, material);
+        node.position.set(x, y, z);
+        scene.add(node);
+
+        const div = document.createElement("div");
+        div.className = "label";
+        div.textContent = text;
+        const label = new THREE.CSS2DObject(div);
+        label.position.set(0, size.height / 2 + 0.1, 0);
+        node.add(label);
+
+        nodes.push({
+          mesh: node,
+          x,
+          y,
+          z,
+          text,
+          parent,
+          color,
+          label,
+          size,
+        });
+
+        if (parent) {
+          const parentNode = nodes.find((n) => n.mesh === parent);
+          addLine(parentNode.mesh, node, 0xffff00); // Yellow for subnodes
+        } else {
+          const centralNode = nodes.find((n) => n.text === rootNode.content);
+          if (centralNode) {
+            addLine(centralNode.mesh, node, 0x0000ff); // Blue for main nodes
+          }
+        }
+      }
+
+      //Adds a line between two nodes in the 3D scene.
+      function addLine(node1, node2, color) {
+        const material = new THREE.LineBasicMaterial({ color: color });
+        const points = [
+          new THREE.Vector3(
+            node1.position.x,
+            node1.position.y,
+            node1.position.z
+          ),
+          new THREE.Vector3(
+            node2.position.x,
+            node2.position.y,
+            node2.position.z
+          ),
+        ];
+        const geometry = new THREE.BufferGeometry().setFromPoints(points);
+        const line = new THREE.Line(geometry, material);
+        scene.add(line);
+        lines.push({ line, node1, node2 });
+      }
+
+      //Removes a node from the 3D scene, including its subnodes and associated lines.
+      function removeNode(node) {
+        if (node.text === "Central Node") return; // Prevent deleting the central node
+
+        const subnodes = nodes.filter((n) => n.parent === node.mesh);
+        subnodes.forEach((subnode) => removeNode(subnode));
+
+        for (let i = lines.length - 1; i >= 0; i--) {
+          if (lines[i].node1 === node.mesh || lines[i].node2 === node.mesh) {
+            scene.remove(lines[i].line);
+            lines.splice(i, 1);
+          }
+        }
+
+        node.mesh.remove(node.label);
+        scene.remove(node.mesh);
+        const nodeIndex = nodes.findIndex((n) => n.mesh === node.mesh);
+        if (nodeIndex !== -1) {
+          nodes.splice(nodeIndex, 1);
+        }
+      }
+
+      //Finds the object under the mouse cursor
+      function findObjectUnderMouse(event) {
+        const rect = renderer.domElement.getBoundingClientRect();
+        const mouseX = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+        const mouseY = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+        const mousePosition = new THREE.Vector2(mouseX, mouseY);
+        const raycaster = new THREE.Raycaster();
+        raycaster.setFromCamera(mousePosition, camera);
+        const intersects = raycaster.intersectObjects(scene.children, true);
+        if (intersects.length > 0) {
+          return intersects[0].object;
+        }
+        return null;
+      }
+
+      //Updates the positions of subnodes relative to their parent node
+      function updateSubnodePositions(parentNode) {
+        const subnodes = nodes.filter((n) => n.parent === parentNode.mesh);
+        subnodes.forEach((subnode) => {
+          const line = lines.find(
+            (l) => l.node1 === parentNode.mesh && l.node2 === subnode.mesh
+          );
+          if (line) {
+            const direction = new THREE.Vector3()
+              .subVectors(subnode.mesh.position, parentNode.mesh.position)
+              .normalize();
+            const newLength = line.line.userData.originalLength * 0.5;
+            const newPos = new THREE.Vector3()
+              .copy(parentNode.mesh.position)
+              .add(direction.multiplyScalar(newLength));
+            subnode.mesh.position.copy(newPos);
+
+            const points = [
+              new THREE.Vector3(
+                parentNode.mesh.position.x,
+                parentNode.mesh.position.y,
+                parentNode.mesh.position.z
+              ),
+              new THREE.Vector3(
+                subnode.mesh.position.x,
+                subnode.mesh.position.y,
+                subnode.mesh.position.z
+              ),
+            ];
+            line.line.geometry.setFromPoints(points);
+
+            updateSubnodePositions(subnode);
+          }
+        });
+      }
+
+      //Adds a node to the 3D mind map with optional parent node content
+      function addNodeTo3DMindMap(content, parentContent = null) {
+        let parentNode = null;
+        if (parentContent) {
+          parentNode = nodes.find((node) => node.text === parentContent);
+        }
+
+        const xOffset = (Math.random() * 2 - 1) * 7; // Random position in space
+        const yOffset = (Math.random() * 2 - 1) * 7;
+        const zOffset = (Math.random() * 2 - 1) * 7;
+
+        const x = parentNode ? parentNode.mesh.position.x + xOffset : xOffset;
+        const y = parentNode ? parentNode.mesh.position.y + yOffset : yOffset;
+        const z = parentNode ? parentNode.mesh.position.z + zOffset : zOffset;
+
+        addNode(
+          x,
+          y,
+          z,
+          content,
+          parentNode ? parentNode.mesh : null,
+          Math.random() * 0xffffff,
+          { width: 1.5, height: 1, depth: 0.5 },
+          "3d-mindmap"
+        );
+
+        // Force rendering update
+        if (mindMap3DInitialized) {
+          animate();
+        }
+      }
+
+      //Deletes a node from the 3D mind map by its content
+      function delete3DNode(content) {
+        const node = nodes.find((n) => n.text === content);
+        if (node) {
+          removeNode(node);
+        }
+      }
+
+      //Loads a scene from saved data, including nodes and lines
+      function loadScene(loadedNodes, loadedLines) {
+        while (nodes.length) removeNode(nodes[0]);
+        loadedNodes.forEach((nodeData) => {
+          const parent =
+            nodeData.parent !== null ? nodes[nodeData.parent].mesh : null;
+          addNode(
+            nodeData.x,
+            nodeData.y,
+            nodeData.z,
+            nodeData.text,
+            parent,
+            nodeData.color,
+            nodeData.size
+          );
+        });
+
+        // Restore connections (lines) between nodes
+        loadedLines.forEach((lineData) => {
+          const startNode = nodes[lineData.startNode].mesh;
+          const endNode = nodes[lineData.endNode].mesh;
+          addLine(startNode, endNode, lineData.color);
+        });
+      }
+
+      //Animates the scene by continuously rendering it
+      function animate() {
+        requestAnimationFrame(animate);
+        controls.update();
+        renderer.render(scene, camera);
+        labelRenderer.render(scene, camera);
+      }
+
+      window.addEventListener("resize", () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        labelRenderer.setSize(window.innerWidth, window.innerHeight);
+      });
+
+      //Initializes the 3D mind map
+      function initialize3DMindMap() {
+        if (mindMap3DInitialized) return; // Initialize only once
+
+        const canvas = document.getElementById("3d-mindmap-canvas");
+        scene = new THREE.Scene();
+        camera = new THREE.PerspectiveCamera(
+          75,
+          canvas.clientWidth / canvas.clientHeight,
+          0.1,
+          100
+        );
+        renderer = new THREE.WebGLRenderer({ canvas: canvas });
+        renderer.setSize(canvas.clientWidth, canvas.clientHeight);
+
+        labelRenderer = new THREE.CSS2DRenderer();
+        labelRenderer.setSize(canvas.clientWidth, canvas.clientHeight);
+        labelRenderer.domElement.style.position = "absolute";
+        labelRenderer.domElement.style.top = "0px";
+        labelRenderer.domElement.style.pointerEvents = "none";
+        document
+          .getElementById("mindmap-3d-section")
+          .appendChild(labelRenderer.domElement);
+
+        const centralNodePosition = new THREE.Vector3(0, 0, 0);
+        camera.position.set(0, 0, 10);
+        const ambientLight = new THREE.AmbientLight(0x404040);
+        scene.add(ambientLight);
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
+        directionalLight.position.set(0, 1, 1);
+        scene.add(directionalLight);
+
+        controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.target.copy(centralNodePosition);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+
+        if (!nodes.some((node) => node.text === "Central Node")) {
+          addNode(0, 0, 0, rootNode.content, null, 0xff0000, {
+            width: 1.5,
+            height: 1.5,
+            depth: 1.5,
+          });
+        }
+
+        renderer.domElement.addEventListener("contextmenu", (event) => {
+          event.preventDefault();
+        });
+
+        // Event listener for 3D Mind Map to add nodes and subnodes
+        renderer.domElement.addEventListener("click", (event) => {
+          const selectedNode = findObjectUnderMouse(event);
+          const parentNode = selectedNode
+            ? nodes.find((node) => node.mesh === selectedNode)
+            : null;
+
+          if (event.altKey && event.button === 0) {
+            if (parentNode) {
+              // Check if the parent node is the "Central Node"
+              if (parentNode.text === rootNode.content) {
+                alert("You cannot add subnodes to the Central Node.");
+                return;
+              }
+
+              const text = prompt("Enter subnode content:");
+              if (!text) return;
+
+              // Check if the parent node is a subnode itself
+              const isSubnode = parentNode && parentNode.parent !== null;
+              if (isSubnode) {
+                alert("Subnodes cannot have new subnodes.");
+                return;
+              }
+
+              const position = calculateNewPosition(parentNode);
+              addNode(
+                position.x,
+                position.y,
+                position.z,
+                text,
+                selectedNode,
+                Math.random() * 0xffffff,
+                { width: 1, height: 1, depth: 1 }
+              );
+
+              synchronizeTask(text, "3dmindmap", parentNode.text);
+            }
+          } else if (event.ctrlKey && event.button === 0 && !parentNode) {
+            const text = prompt("Enter node content:");
+            if (!text) return;
+
+            const position = calculateNewPosition(null);
+            addNode(position.x, position.y, position.z, text);
+
+            synchronizeTask(text, "3dmindmap");
+          } else if (event.shiftKey) {
+            if (parentNode && parentNode.text !== rootNode.content) {
+              removeNode(parentNode);
+              deleteTaskInPomodoro(parentNode.text);
+            }
+          }
+        });
+
+        animate();
+        mindMap3DInitialized = true; // Set to true after initialization
+      }
+
+      //Starts the application with the desired section.
+      function startApplication(initialSection) {
+        switchTo(initialSection);
+      }
+
+      // Start the application with the default section
+      startApplication("mindmap-3d"); // or "mindmap" or "mindmap-3d" depending on the default section
+
+      //Calculates a new position for a node, ensuring it is valid
+      function calculateNewPosition(parentNode) {
+        const range = 7;
+        const offset = range / 2;
+        let position;
+        let attempts = 0;
+        const maxAttempts = 100;
+
+        do {
+          const xOffset = getRandomPosition(range, offset);
+          const yOffset = getRandomPosition(range, offset);
+          const zOffset = getRandomPosition(range, offset);
+
+          position = {
+            x: parentNode ? parentNode.mesh.position.x + xOffset : xOffset,
+            y: parentNode ? parentNode.mesh.position.y + yOffset : yOffset,
+            z: parentNode ? parentNode.mesh.position.z + zOffset : zOffset,
+          };
+
+          attempts++;
+        } while (!isPositionValid(position) && attempts < maxAttempts);
+
+        return position;
+      }
+
+      //Checks if a position is valid, ensuring a minimum distance between nodes
+      function isPositionValid(position) {
+        const minDistance = 2; // Minimum distance between nodes
+
+        for (let node of nodes) {
+          const distance = Math.sqrt(
+            Math.pow(position.x - node.mesh.position.x, 2) +
+              Math.pow(position.y - node.mesh.position.y, 2) +
+              Math.pow(position.z - node.mesh.position.z, 2)
+          );
+
+          if (distance < minDistance) {
+            return false;
+          }
+        }
+
+        return true;
+      }
+
+      // Function to handle renaming the "Central Node"
+      function changeCentralNodeName() {
+        const newName = prompt("Enter new name for the Central Node:");
+        if (!newName || newName.trim() === "") return;
+
+        // Update in the 3D Mind Map
+        const centralNode = nodes.find(
+          (node) =>
+            node.text === "Central Node" || node.text === rootNode.content
+        );
+        if (centralNode) {
+          centralNode.text = newName;
+          centralNode.label.element.textContent = newName;
+        }
+
+        // Update in the regular Mind Map
+        rootNode.content = newName;
+        if (mindMapInitialized) {
+          mm.setData(rootNode);
+          mm.fit();
+        }
+
+        // Synchronize task update across all modules
+        synchronizeTaskUpdate("Central Node", newName);
+      }
+
+      //Synchronizes the 3D mind map with the given subtask and parent task
+      function synchronize3DMindMap(subtaskText, parentTask) {
+        const parentNode = nodes.find((node) => node.text === parentTask);
+        if (parentNode) {
+          addNodeTo3DMindMap(subtaskText, parentTask);
+        } else {
+          addNodeTo3DMindMap(subtaskText);
+        }
+      }
+
+      // Updated event listener for renaming the Central Node
+      document
+        .getElementById("changeDescriptionButton")
+        .addEventListener("click", changeCentralNodeName);
+
+      document
+        .getElementById("fileInput")
+        .addEventListener("change", function (event) {
+          const fileReader = new FileReader();
+          fileReader.onload = function (event) {
+            const loadedNodes = JSON.parse(event.target.result);
+            loadScene(loadedNodes);
+          };
+          fileReader.readAsText(event.target.files[0]);
+        });
+
+      // Main Initialization
+      document.addEventListener("DOMContentLoaded", () => {
+        document
+          .getElementById("add-task")
+          .addEventListener("click", handleAddTask);
+        document
+          .getElementById("task-input")
+          .addEventListener("keypress", (event) => {
+            if (event.key === "Enter") {
+              handleAddTask();
+            }
+          });
+
+        ["pomodoro", "short-break", "long-break"].forEach((id) => {
+          document
+            .getElementById(id)
+            .addEventListener("click", () => setTimer(id));
+        });
+        document
+          .getElementById("start-stop")
+          .addEventListener("click", toggleTimer);
+        document.getElementById("reset").addEventListener("click", resetTimer);
+        document
+          .getElementById("settings")
+          .addEventListener("click", () => toggleSettings(true));
+
+        document.addEventListener("keydown", (e) => {
+          if (e.ctrlKey && e.key === "s") {
+            e.preventDefault();
+            saveTasksToFile();
+          }
+        });
+
+        document.addEventListener("keydown", (e) => {
+          if (e.ctrlKey && e.key === "o") {
+            e.preventDefault();
+            loadTasksFromFile();
+          }
+        });
+
+        document.addEventListener("keydown", function (event) {
+          if (event.key === "Tab") {
+            var settingsPopup = document.getElementById("settings-popup");
+            var settingsVisible = settingsPopup.style.display === "flex";
+            if (settingsVisible) {
+              event.preventDefault();
+              addCategory();
+            }
+          }
+
+          const mindmapSvg = document.getElementById("mindmap");
+
+          mindmapSvg.addEventListener("contextmenu", function (event) {
+            if (event.ctrlKey) {
+              event.preventDefault();
+              const target = event.target;
+              if (
+                target.tagName.toLowerCase() === "div" &&
+                target.parentNode.tagName.toLowerCase() === "foreignobject"
+              ) {
+                const selectedNode = target.textContent;
+                const selectedParent = findNodeByContent(
+                  rootNode,
+                  selectedNode
+                );
+                if (selectedParent) {
+                  const newSubchildContent = prompt(
+                    `Enter new subchild content for ${selectedNode}:`
+                  );
+                  if (newSubchildContent && newSubchildContent.trim() !== "") {
+                    const newSubchild = {
+                      content: newSubchildContent,
+                      children: [],
+                    };
+                    selectedParent.children.push(newSubchild);
+                    mm.setData(rootNode);
+                    mm.fit();
+                    synchronizeTask(
+                      newSubchildContent,
+                      "mindmap",
+                      selectedNode
+                    );
+                  }
+                }
+              }
+            }
+          });
+
+          mindmapSvg.addEventListener("click", function (event) {
+            if (event.shiftKey) {
+              const target = event.target;
+              if (
+                target.tagName.toLowerCase() === "div" &&
+                target.parentNode.tagName.toLowerCase() === "foreignobject"
+              ) {
+                const selectedNodeContent = target.textContent;
+                deleteMindMapNode(selectedNodeContent);
+              }
+            }
+          });
+        });
+
+        document
+          .getElementById("add-category")
+          .addEventListener("click", addCategory);
+        document
+          .getElementById("update-categories")
+          .addEventListener("click", updateCategories);
+
+        document.addEventListener("keydown", function (event) {
+          // Check if ALT + F1 is pressed
+          if (event.altKey && event.code === "F1") {
+            event.preventDefault();
+            toggleFunctionalities();
+          }
+
+          // Check if F11 is pressed
+          if (event.code === "F11") {
+            event.preventDefault();
+            toggleFullscreen();
+          }
+        });
+        mindMap3DInitialized = true; // Set to true after initialization
+        switchTo("mindmap-3d");
+        startApplication("pomodoro"); // or whatever default section you want
+        initialize3DMindMap();
+      });
+
+      document.addEventListener("keydown", function (event) {
+        if (event.altKey && event.key === "p") {
+          setTimer("pomodoro");
+        } else if (event.altKey && event.key === "s") {
+          setTimer("short-break");
+        } else if (event.altKey && event.key === "l") {
+          setTimer("long-break");
+        } else if (event.altKey && event.key === "r") {
+          resetTimer();
+        } else if (event.altKey && event.key === "F1") {
+          toggleFunctionalities();
+        }
+      });
+
+      document
+        .getElementById("fullscreen-toggle")
+        .addEventListener("click", toggleFullscreen);
+
+      document.addEventListener("fullscreenchange", function () {
+        if (!document.fullscreenElement) {
+          toggleFullscreen();
+        }
+      });
+
+      document.addEventListener("keydown", function (event) {
+        if (event.altKey && event.key === "p") {
+          setTimer("pomodoro");
+        } else if (event.altKey && event.key === "s") {
+          setTimer("short-break");
+        } else if (event.altKey && event.key === "l") {
+          setTimer("long-break");
+        } else if (event.altKey && event.key === "r") {
+          resetTimer();
+        }
+      });
+
+      document
+        .getElementById("fullscreen-toggle")
+        .addEventListener("click", toggleFullscreen);
+
+      document.addEventListener("fullscreenchange", function () {
+        if (!document.fullscreenElement) {
+          toggleFullscreen();
+        }
+      });
+
+      //
+      //// Additional Helper Functions
+
+      //
+      // Setup function to initialize the 3D mind map if not already initialized
+      function setupMindMap3D() {
+        if (!mindMap3DInitialized) {
+          initialize3DMindMap();
+          mindMap3DInitialized = true;
+        }
+      }
+
+      //Functions from index.js
+      (function (exports, d32) {
+        "use strict";
+        class Hook {
+          constructor() {
+            this.listeners = [];
+          }
+          tap(fn) {
+            this.listeners.push(fn);
+            return () => this.revoke(fn);
+          }
+          revoke(fn) {
+            const i = this.listeners.indexOf(fn);
+            if (i >= 0) this.listeners.splice(i, 1);
+          }
+          revokeAll() {
+            this.listeners.splice(0);
+          }
+          call(...args) {
+            for (const fn of this.listeners) {
+              fn(...args);
+            }
+          }
+        }
+        const uniqId = Math.random().toString(36).slice(2, 8);
+        let globalIndex = 0;
+        function getId() {
+          globalIndex += 1;
+          return `mm-${uniqId}-${globalIndex}`;
+        }
+        function noop() {}
+        function walkTree(tree, callback) {
+          const walk = (item, parent) =>
+            callback(
+              item,
+              () => {
+                var _a;
+                return (_a = item.children) == null
+                  ? void 0
+                  : _a.map((child) => walk(child, item));
+              },
+              parent
+            );
+          return walk(tree);
+        }
+        function addClass(className, ...rest) {
+          const classList = (className || "").split(" ").filter(Boolean);
+          rest.forEach((item) => {
+            if (item && classList.indexOf(item) < 0) classList.push(item);
+          });
+          return classList.join(" ");
+        }
+        function childSelector(filter) {
+          if (typeof filter === "string") {
+            const tagName = filter;
+            filter = (el) => el.tagName === tagName;
+          }
+          const filterFn = filter;
+          return function selector() {
+            let nodes = Array.from(this.childNodes);
+            if (filterFn) nodes = nodes.filter((node) => filterFn(node));
+            return nodes;
+          };
+        }
+        function defer() {
+          const obj = {};
+          obj.promise = new Promise((resolve, reject) => {
+            obj.resolve = resolve;
+            obj.reject = reject;
+          });
+          return obj;
+        }
+        function memoize(fn) {
+          const cache = {};
+          return function memoized(...args) {
+            const key = `${args[0]}`;
+            let data = cache[key];
+            if (!data) {
+              data = {
+                value: fn(...args),
+              };
+              cache[key] = data;
+            }
+            return data.value;
+          };
+        }
+        function debounce(fn, time) {
+          const state = {
+            timer: 0,
+          };
+          function reset() {
+            if (state.timer) {
+              window.clearTimeout(state.timer);
+              state.timer = 0;
+            }
+          }
+          function run() {
+            reset();
+            if (state.args) state.result = fn(...state.args);
+          }
+          return function debounced(...args) {
+            reset();
+            state.args = args;
+            state.timer = window.setTimeout(run, time);
+            return state.result;
+          };
+        }
+        /*! @gera2ld/jsx-dom v2.2.2 | ISC License */
+        const VTYPE_ELEMENT$1 = 1;
+        const VTYPE_FUNCTION$1 = 2;
+        const SVG_NS$1 = "http://www.w3.org/2000/svg";
+        const XLINK_NS$1 = "http://www.w3.org/1999/xlink";
+        const NS_ATTRS$1 = {
+          show: XLINK_NS$1,
+          actuate: XLINK_NS$1,
+          href: XLINK_NS$1,
+        };
+        const isLeaf$1 = (c) => typeof c === "string" || typeof c === "number";
+        const isElement$1 = (c) =>
+          (c == null ? void 0 : c.vtype) === VTYPE_ELEMENT$1;
+        const isRenderFunction$1 = (c) =>
+          (c == null ? void 0 : c.vtype) === VTYPE_FUNCTION$1;
+        function h(type, props, ...children) {
+          props = Object.assign({}, props, {
+            children: children.length === 1 ? children[0] : children,
+          });
+          return jsx$1(type, props);
+        }
+        function jsx$1(type, props) {
+          let vtype;
+          if (typeof type === "string") vtype = VTYPE_ELEMENT$1;
+          else if (typeof type === "function") vtype = VTYPE_FUNCTION$1;
+          else throw new Error("Invalid VNode type");
+          return {
+            vtype,
+            type,
+            props,
+          };
+        }
+        function Fragment$1(props) {
+          return props.children;
+        }
+        const DEFAULT_ENV$1 = {
+          isSvg: false,
+        };
+        function insertDom$1(parent, nodes) {
+          if (!Array.isArray(nodes)) nodes = [nodes];
+          nodes = nodes.filter(Boolean);
+          if (nodes.length) parent.append(...nodes);
+        }
+        function mountAttributes$1(domElement, props, env) {
+          for (const key in props) {
+            if (key === "key" || key === "children" || key === "ref") continue;
+            if (key === "dangerouslySetInnerHTML") {
+              domElement.innerHTML = props[key].__html;
+            } else if (
+              key === "innerHTML" ||
+              key === "textContent" ||
+              key === "innerText" ||
+              (key === "value" &&
+                ["textarea", "select"].includes(domElement.tagName))
+            ) {
+              const value = props[key];
+              if (value != null) domElement[key] = value;
+            } else if (key.startsWith("on")) {
+              domElement[key.toLowerCase()] = props[key];
+            } else {
+              setDOMAttribute$1(domElement, key, props[key], env.isSvg);
+            }
+          }
+        }
+        const attrMap$1 = {
+          className: "class",
+          labelFor: "for",
+        };
+        function setDOMAttribute$1(el, attr, value, isSVG) {
+          attr = attrMap$1[attr] || attr;
+          if (value === true) {
+            el.setAttribute(attr, "");
+          } else if (value === false) {
+            el.removeAttribute(attr);
+          } else {
+            const namespace = isSVG ? NS_ATTRS$1[attr] : void 0;
+            if (namespace !== void 0) {
+              el.setAttributeNS(namespace, attr, value);
+            } else {
+              el.setAttribute(attr, value);
+            }
+          }
+        }
+        function flatten$1(arr) {
+          return arr.reduce((prev, item) => prev.concat(item), []);
+        }
+        function mountChildren$1(children, env) {
+          return Array.isArray(children)
+            ? flatten$1(children.map((child) => mountChildren$1(child, env)))
+            : mount$1(children, env);
+        }
+        function mount$1(vnode, env = DEFAULT_ENV$1) {
+          if (vnode == null || typeof vnode === "boolean") {
+            return null;
+          }
+          if (vnode instanceof Node) {
+            return vnode;
+          }
+          if (isRenderFunction$1(vnode)) {
+            const { type, props } = vnode;
+            if (type === Fragment$1) {
+              const node = document.createDocumentFragment();
+              if (props.children) {
+                const children = mountChildren$1(props.children, env);
+                insertDom$1(node, children);
+              }
+              return node;
+            }
+            const childVNode = type(props);
+            return mount$1(childVNode, env);
+          }
+          if (isLeaf$1(vnode)) {
+            return document.createTextNode(`${vnode}`);
+          }
+          if (isElement$1(vnode)) {
+            let node;
+            const { type, props } = vnode;
+            if (!env.isSvg && type === "svg") {
+              env = Object.assign({}, env, {
+                isSvg: true,
+              });
+            }
+            if (!env.isSvg) {
+              node = document.createElement(type);
+            } else {
+              node = document.createElementNS(SVG_NS$1, type);
+            }
+            mountAttributes$1(node, props, env);
+            if (props.children) {
+              let childEnv = env;
+              if (env.isSvg && type === "foreignObject") {
+                childEnv = Object.assign({}, childEnv, {
+                  isSvg: false,
+                });
+              }
+              const children = mountChildren$1(props.children, childEnv);
+              if (children != null) insertDom$1(node, children);
+            }
+            const { ref } = props;
+            if (typeof ref === "function") ref(node);
+            return node;
+          }
+          throw new Error("mount: Invalid Vnode!");
+        }
+        function mountDom$1(vnode) {
+          return mount$1(vnode);
+        }
+        function hm(...args) {
+          return mountDom$1(h(...args));
+        }
+        const memoizedPreloadJS = memoize((url) => {
+          document.head.append(
+            hm("link", {
+              rel: "preload",
+              as: "script",
+              href: url,
+            })
+          );
+        });
+        const jsCache = {};
+        const cssCache = {};
+        async function loadJSItem(item, context) {
+          var _a;
+          const src =
+            (item.type === "script" &&
+              ((_a = item.data) == null ? void 0 : _a.src)) ||
+            "";
+          item.loaded || (item.loaded = jsCache[src]);
+          if (!item.loaded) {
+            const deferred = defer();
+            item.loaded = deferred.promise;
+            if (item.type === "script") {
+              document.head.append(
+                hm("script", {
+                  ...item.data,
+                  onLoad: () => deferred.resolve(),
+                  onError: deferred.reject,
+                })
+              );
+              if (!src) {
+                deferred.resolve();
+              } else {
+                jsCache[src] = item.loaded;
+              }
+            }
+            if (item.type === "iife") {
+              const { fn, getParams } = item.data;
+              fn(...((getParams == null ? void 0 : getParams(context)) || []));
+              deferred.resolve();
+            }
+          }
+          await item.loaded;
+        }
+        async function loadCSSItem(item) {
+          const url = (item.type === "stylesheet" && item.data.href) || "";
+          item.loaded || (item.loaded = cssCache[url]);
+          if (!item.loaded) {
+            const deferred = defer();
+            item.loaded = deferred.promise;
+            if (url) cssCache[url] = item.loaded;
+            if (item.type === "style") {
+              document.head.append(
+                hm("style", {
+                  textContent: item.data,
+                })
+              );
+              deferred.resolve();
+            } else if (url) {
+              document.head.append(
+                hm("link", {
+                  rel: "stylesheet",
+                  ...item.data,
+                })
+              );
+              fetch(url)
+                .then((res) => {
+                  if (res.ok) return res.text();
+                  throw res;
+                })
+                .then(() => deferred.resolve(), deferred.reject);
+            }
+          }
+          await item.loaded;
+        }
+        async function loadJS(items, context) {
+          items.forEach((item) => {
+            var _a;
+            if (
+              item.type === "script" &&
+              ((_a = item.data) == null ? void 0 : _a.src)
+            ) {
+              memoizedPreloadJS(item.data.src);
+            }
+          });
+          context = {
+            getMarkmap: () => window.markmap,
+            ...context,
+          };
+          for (const item of items) {
+            await loadJSItem(item, context);
+          }
+        }
+        async function loadCSS(items) {
+          await Promise.all(items.map((item) => loadCSSItem(item)));
+        }
+        const isMacintosh =
+          typeof navigator !== "undefined" &&
+          navigator.userAgent.includes("Macintosh");
+        const defaultColorFn = d32.scaleOrdinal(d32.schemeCategory10);
+        const defaultOptions = {
+          autoFit: false,
+          color: (node) => {
+            var _a;
+            return defaultColorFn(
+              `${((_a = node.state) == null ? void 0 : _a.path) || ""}`
+            );
+          },
+          duration: 500,
+          embedGlobalCSS: true,
+          fitRatio: 0.95,
+          maxWidth: 0,
+          nodeMinHeight: 16,
+          paddingX: 8,
+          scrollForPan: isMacintosh,
+          spacingHorizontal: 80,
+          spacingVertical: 5,
+          initialExpandLevel: -1,
+          zoom: true,
+          pan: true,
+          toggleRecursively: false,
+        };
+        function deriveOptions(jsonOptions) {
+          const derivedOptions = {};
+          const options = { ...jsonOptions };
+          const { color, colorFreezeLevel } = options;
+          if ((color == null ? void 0 : color.length) === 1) {
+            const solidColor = color[0];
+            derivedOptions.color = () => solidColor;
+          } else if (color == null ? void 0 : color.length) {
+            const colorFn = d32.scaleOrdinal(color);
+            derivedOptions.color = (node) => colorFn(`${node.state.path}`);
+          }
+          if (colorFreezeLevel) {
+            const color2 = derivedOptions.color || defaultOptions.color;
+            derivedOptions.color = (node) => {
+              node = {
+                ...node,
+                state: {
+                  ...node.state,
+                  path: node.state.path
+                    .split(".")
+                    .slice(0, colorFreezeLevel)
+                    .join("."),
+                },
+              };
+              return color2(node);
+            };
+          }
+          const numberKeys = ["duration", "maxWidth", "initialExpandLevel"];
+          numberKeys.forEach((key) => {
+            const value = options[key];
+            if (typeof value === "number") derivedOptions[key] = value;
+          });
+          const booleanKeys = ["zoom", "pan"];
+          booleanKeys.forEach((key) => {
+            const value = options[key];
+            if (value != null) derivedOptions[key] = !!value;
+          });
+          return derivedOptions;
+        }
+        /*! @gera2ld/jsx-dom v2.2.2 | ISC License */
+        const VTYPE_ELEMENT = 1;
+        const VTYPE_FUNCTION = 2;
+        const SVG_NS = "http://www.w3.org/2000/svg";
+        const XLINK_NS = "http://www.w3.org/1999/xlink";
+        const NS_ATTRS = {
+          show: XLINK_NS,
+          actuate: XLINK_NS,
+          href: XLINK_NS,
+        };
+        const isLeaf = (c) => typeof c === "string" || typeof c === "number";
+        const isElement = (c) =>
+          (c == null ? void 0 : c.vtype) === VTYPE_ELEMENT;
+        const isRenderFunction = (c) =>
+          (c == null ? void 0 : c.vtype) === VTYPE_FUNCTION;
+        function jsx(type, props) {
+          let vtype;
+          if (typeof type === "string") vtype = VTYPE_ELEMENT;
+          else if (typeof type === "function") vtype = VTYPE_FUNCTION;
+          else throw new Error("Invalid VNode type");
+          return {
+            vtype,
+            type,
+            props,
+          };
+        }
+        function Fragment(props) {
+          return props.children;
+        }
+        const DEFAULT_ENV = {
+          isSvg: false,
+        };
+        function insertDom(parent, nodes) {
+          if (!Array.isArray(nodes)) nodes = [nodes];
+          nodes = nodes.filter(Boolean);
+          if (nodes.length) parent.append(...nodes);
+        }
+        function mountAttributes(domElement, props, env) {
+          for (const key in props) {
+            if (key === "key" || key === "children" || key === "ref") continue;
+            if (key === "dangerouslySetInnerHTML") {
+              domElement.innerHTML = props[key].__html;
+            } else if (
+              key === "innerHTML" ||
+              key === "textContent" ||
+              key === "innerText" ||
+              (key === "value" &&
+                ["textarea", "select"].includes(domElement.tagName))
+            ) {
+              const value = props[key];
+              if (value != null) domElement[key] = value;
+            } else if (key.startsWith("on")) {
+              domElement[key.toLowerCase()] = props[key];
+            } else {
+              setDOMAttribute(domElement, key, props[key], env.isSvg);
+            }
+          }
+        }
+        const attrMap = {
+          className: "class",
+          labelFor: "for",
+        };
+        function setDOMAttribute(el, attr, value, isSVG) {
+          attr = attrMap[attr] || attr;
+          if (value === true) {
+            el.setAttribute(attr, "");
+          } else if (value === false) {
+            el.removeAttribute(attr);
+          } else {
+            const namespace = isSVG ? NS_ATTRS[attr] : void 0;
+            if (namespace !== void 0) {
+              el.setAttributeNS(namespace, attr, value);
+            } else {
+              el.setAttribute(attr, value);
+            }
+          }
+        }
+        function flatten(arr) {
+          return arr.reduce((prev, item) => prev.concat(item), []);
+        }
+        function mountChildren(children, env) {
+          return Array.isArray(children)
+            ? flatten(children.map((child) => mountChildren(child, env)))
+            : mount(children, env);
+        }
+        function mount(vnode, env = DEFAULT_ENV) {
+          if (vnode == null || typeof vnode === "boolean") {
+            return null;
+          }
+          if (vnode instanceof Node) {
+            return vnode;
+          }
+          if (isRenderFunction(vnode)) {
+            const { type, props } = vnode;
+            if (type === Fragment) {
+              const node = document.createDocumentFragment();
+              if (props.children) {
+                const children = mountChildren(props.children, env);
+                insertDom(node, children);
+              }
+              return node;
+            }
+            const childVNode = type(props);
+            return mount(childVNode, env);
+          }
+          if (isLeaf(vnode)) {
+            return document.createTextNode(`${vnode}`);
+          }
+          if (isElement(vnode)) {
+            let node;
+            const { type, props } = vnode;
+            if (!env.isSvg && type === "svg") {
+              env = Object.assign({}, env, {
+                isSvg: true,
+              });
+            }
+            if (!env.isSvg) {
+              node = document.createElement(type);
+            } else {
+              node = document.createElementNS(SVG_NS, type);
+            }
+            mountAttributes(node, props, env);
+            if (props.children) {
+              let childEnv = env;
+              if (env.isSvg && type === "foreignObject") {
+                childEnv = Object.assign({}, childEnv, {
+                  isSvg: false,
+                });
+              }
+              const children = mountChildren(props.children, childEnv);
+              if (children != null) insertDom(node, children);
+            }
+            const { ref } = props;
+            if (typeof ref === "function") ref(node);
+            return node;
+          }
+          throw new Error("mount: Invalid Vnode!");
+        }
+        function mountDom(vnode) {
+          return mount(vnode);
+        }
+        function count(node) {
+          var sum = 0,
+            children = node.children,
+            i = children && children.length;
+          if (!i) sum = 1;
+          else while (--i >= 0) sum += children[i].value;
+          node.value = sum;
+        }
+        function node_count() {
+          return this.eachAfter(count);
+        }
+        function node_each(callback) {
+          var node = this,
+            current,
+            next = [node],
+            children,
+            i,
+            n;
+          do {
+            (current = next.reverse()), (next = []);
+            while ((node = current.pop())) {
+              callback(node), (children = node.children);
+              if (children)
+                for (i = 0, n = children.length; i < n; ++i) {
+                  next.push(children[i]);
+                }
+            }
+          } while (next.length);
+          return this;
+        }
+        function node_eachBefore(callback) {
+          var node = this,
+            nodes = [node],
+            children,
+            i;
+          while ((node = nodes.pop())) {
+            callback(node), (children = node.children);
+            if (children)
+              for (i = children.length - 1; i >= 0; --i) {
+                nodes.push(children[i]);
+              }
+          }
+          return this;
+        }
+        function node_eachAfter(callback) {
+          var node = this,
+            nodes = [node],
+            next = [],
+            children,
+            i,
+            n;
+          while ((node = nodes.pop())) {
+            next.push(node), (children = node.children);
+            if (children)
+              for (i = 0, n = children.length; i < n; ++i) {
+                nodes.push(children[i]);
+              }
+          }
+          while ((node = next.pop())) {
+            callback(node);
+          }
+          return this;
+        }
+        function node_sum(value) {
+          return this.eachAfter(function (node) {
+            var sum = +value(node.data) || 0,
+              children = node.children,
+              i = children && children.length;
+            while (--i >= 0) sum += children[i].value;
+            node.value = sum;
+          });
+        }
+        function node_sort(compare) {
+          return this.eachBefore(function (node) {
+            if (node.children) {
+              node.children.sort(compare);
+            }
+          });
+        }
+        function node_path(end) {
+          var start = this,
+            ancestor = leastCommonAncestor(start, end),
+            nodes = [start];
+          while (start !== ancestor) {
+            start = start.parent;
+            nodes.push(start);
+          }
+          var k = nodes.length;
+          while (end !== ancestor) {
+            nodes.splice(k, 0, end);
+            end = end.parent;
+          }
+          return nodes;
+        }
+        function leastCommonAncestor(a, b) {
+          if (a === b) return a;
+          var aNodes = a.ancestors(),
+            bNodes = b.ancestors(),
+            c = null;
+          a = aNodes.pop();
+          b = bNodes.pop();
+          while (a === b) {
+            c = a;
+            a = aNodes.pop();
+            b = bNodes.pop();
+          }
+          return c;
+        }
+        function node_ancestors() {
+          var node = this,
+            nodes = [node];
+          while ((node = node.parent)) {
+            nodes.push(node);
+          }
+          return nodes;
+        }
+        function node_descendants() {
+          var nodes = [];
+          this.each(function (node) {
+            nodes.push(node);
+          });
+          return nodes;
+        }
+        function node_leaves() {
+          var leaves = [];
+          this.eachBefore(function (node) {
+            if (!node.children) {
+              leaves.push(node);
+            }
+          });
+          return leaves;
+        }
+        function node_links() {
+          var root = this,
+            links = [];
+          root.each(function (node) {
+            if (node !== root) {
+              links.push({ source: node.parent, target: node });
+            }
+          });
+          return links;
+        }
+        function hierarchy(data, children) {
+          var root = new Node$1(data),
+            valued = +data.value && (root.value = data.value),
+            node,
+            nodes = [root],
+            child,
+            childs,
+            i,
+            n;
+          if (children == null) children = defaultChildren;
+          while ((node = nodes.pop())) {
+            if (valued) node.value = +node.data.value;
+            if ((childs = children(node.data)) && (n = childs.length)) {
+              node.children = new Array(n);
+              for (i = n - 1; i >= 0; --i) {
+                nodes.push((child = node.children[i] = new Node$1(childs[i])));
+                child.parent = node;
+                child.depth = node.depth + 1;
+              }
+            }
+          }
+          return root.eachBefore(computeHeight);
+        }
+        function node_copy() {
+          return hierarchy(this).eachBefore(copyData);
+        }
+        function defaultChildren(d) {
+          return d.children;
+        }
+        function copyData(node) {
+          node.data = node.data.data;
+        }
+        function computeHeight(node) {
+          var height = 0;
+          do node.height = height;
+          while ((node = node.parent) && node.height < ++height);
+        }
+        function Node$1(data) {
+          this.data = data;
+          this.depth = this.height = 0;
+          this.parent = null;
+        }
+        Node$1.prototype = hierarchy.prototype = {
+          constructor: Node$1,
+          count: node_count,
+          each: node_each,
+          eachAfter: node_eachAfter,
+          eachBefore: node_eachBefore,
+          sum: node_sum,
+          sort: node_sort,
+          path: node_path,
+          ancestors: node_ancestors,
+          descendants: node_descendants,
+          leaves: node_leaves,
+          links: node_links,
+          copy: node_copy,
+        };
+        const name = "d3-flextree";
+        const version$1 = "2.1.2";
+        const main = "build/d3-flextree.js";
+        const module = "index";
+        const author = {
+          name: "Chris Maloney",
+          url: "http://chrismaloney.org",
+        };
+        const description =
+          "Flexible tree layout algorithm that allows for variable node sizes.";
+        const keywords = [
+          "d3",
+          "d3-module",
+          "layout",
+          "tree",
+          "hierarchy",
+          "d3-hierarchy",
+          "plugin",
+          "d3-plugin",
+          "infovis",
+          "visualization",
+          "2d",
+        ];
+        const homepage = "https://github.com/klortho/d3-flextree";
+        const license = "WTFPL";
+        const repository = {
+          type: "git",
+          url: "https://github.com/klortho/d3-flextree.git",
+        };
+        const scripts = {
+          clean: "rm -rf build demo test",
+          "build:demo": "rollup -c --environment BUILD:demo",
+          "build:dev": "rollup -c --environment BUILD:dev",
+          "build:prod": "rollup -c --environment BUILD:prod",
+          "build:test": "rollup -c --environment BUILD:test",
+          build: "rollup -c",
+          lint: "eslint index.js src",
+          "test:main": "node test/bundle.js",
+          "test:browser": "node test/browser-tests.js",
+          test: "npm-run-all test:*",
+          prepare: "npm-run-all clean build lint test",
+        };
+        const dependencies = {
+          "d3-hierarchy": "^1.1.5",
+        };
+        const devDependencies = {
+          "babel-plugin-external-helpers": "^6.22.0",
+          "babel-preset-es2015-rollup": "^3.0.0",
+          d3: "^4.13.0",
+          "d3-selection-multi": "^1.0.1",
+          eslint: "^4.19.1",
+          jsdom: "^11.6.2",
+          "npm-run-all": "^4.1.2",
+          rollup: "^0.55.3",
+          "rollup-plugin-babel": "^2.7.1",
+          "rollup-plugin-commonjs": "^8.0.2",
+          "rollup-plugin-copy": "^0.2.3",
+          "rollup-plugin-json": "^2.3.0",
+          "rollup-plugin-node-resolve": "^3.0.2",
+          "rollup-plugin-uglify": "^3.0.0",
+          "uglify-es": "^3.3.9",
+        };
+        const packageInfo = {
+          name,
+          version: version$1,
+          main,
+          module,
+          "jsnext:main": "index",
+          author,
+          description,
+          keywords,
+          homepage,
+          license,
+          repository,
+          scripts,
+          dependencies,
+          devDependencies,
+        };
+        const { version } = packageInfo;
+        const defaults = Object.freeze({
+          children: (data) => data.children,
+          nodeSize: (node) => node.data.size,
+          spacing: 0,
+        });
+        function flextree(options) {
+          const opts = Object.assign({}, defaults, options);
+          function accessor(name2) {
+            const opt = opts[name2];
+            return typeof opt === "function" ? opt : () => opt;
+          }
+          function layout(tree) {
+            const wtree = wrap(getWrapper(), tree, (node) => node.children);
+            wtree.update();
+            return wtree.data;
+          }
+          function getFlexNode() {
+            const nodeSize = accessor("nodeSize");
+            const spacing = accessor("spacing");
+            return class FlexNode extends hierarchy.prototype.constructor {
+              constructor(data) {
+                super(data);
+              }
+              copy() {
+                const c = wrap(this.constructor, this, (node) => node.children);
+                c.each((node) => (node.data = node.data.data));
+                return c;
+              }
+              get size() {
+                return nodeSize(this);
+              }
+              spacing(oNode) {
+                return spacing(this, oNode);
+              }
+              get nodes() {
+                return this.descendants();
+              }
+              get xSize() {
+                return this.size[0];
+              }
+              get ySize() {
+                return this.size[1];
+              }
+              get top() {
+                return this.y;
+              }
+              get bottom() {
+                return this.y + this.ySize;
+              }
+              get left() {
+                return this.x - this.xSize / 2;
+              }
+              get right() {
+                return this.x + this.xSize / 2;
+              }
+              get root() {
+                const ancs = this.ancestors();
+                return ancs[ancs.length - 1];
+              }
+              get numChildren() {
+                return this.hasChildren ? this.children.length : 0;
+              }
+              get hasChildren() {
+                return !this.noChildren;
+              }
+              get noChildren() {
+                return this.children === null;
+              }
+              get firstChild() {
+                return this.hasChildren ? this.children[0] : null;
+              }
+              get lastChild() {
+                return this.hasChildren
+                  ? this.children[this.numChildren - 1]
+                  : null;
+              }
+              get extents() {
+                return (this.children || []).reduce(
+                  (acc, kid) => FlexNode.maxExtents(acc, kid.extents),
+                  this.nodeExtents
+                );
+              }
+              get nodeExtents() {
+                return {
+                  top: this.top,
+                  bottom: this.bottom,
+                  left: this.left,
+                  right: this.right,
+                };
+              }
+              static maxExtents(e0, e1) {
+                return {
+                  top: Math.min(e0.top, e1.top),
+                  bottom: Math.max(e0.bottom, e1.bottom),
+                  left: Math.min(e0.left, e1.left),
+                  right: Math.max(e0.right, e1.right),
+                };
+              }
+            };
+          }
+          function getWrapper() {
+            const FlexNode = getFlexNode();
+            const nodeSize = accessor("nodeSize");
+            const spacing = accessor("spacing");
+            return class extends FlexNode {
+              constructor(data) {
+                super(data);
+                Object.assign(this, {
+                  x: 0,
+                  y: 0,
+                  relX: 0,
+                  prelim: 0,
+                  shift: 0,
+                  change: 0,
+                  lExt: this,
+                  lExtRelX: 0,
+                  lThr: null,
+                  rExt: this,
+                  rExtRelX: 0,
+                  rThr: null,
+                });
+              }
+              get size() {
+                return nodeSize(this.data);
+              }
+              spacing(oNode) {
+                return spacing(this.data, oNode.data);
+              }
+              get x() {
+                return this.data.x;
+              }
+              set x(v) {
+                this.data.x = v;
+              }
+              get y() {
+                return this.data.y;
+              }
+              set y(v) {
+                this.data.y = v;
+              }
+              update() {
+                layoutChildren(this);
+                resolveX(this);
+                return this;
+              }
+            };
+          }
+          function wrap(FlexClass, treeData, children) {
+            const _wrap = (data, parent) => {
+              const node = new FlexClass(data);
+              Object.assign(node, {
+                parent,
+                depth: parent === null ? 0 : parent.depth + 1,
+                height: 0,
+                length: 1,
+              });
+              const kidsData = children(data) || [];
+              node.children =
+                kidsData.length === 0
+                  ? null
+                  : kidsData.map((kd) => _wrap(kd, node));
+              if (node.children) {
+                Object.assign(
+                  node,
+                  node.children.reduce(
+                    (hl, kid) => ({
+                      height: Math.max(hl.height, kid.height + 1),
+                      length: hl.length + kid.length,
+                    }),
+                    node
+                  )
+                );
+              }
+              return node;
+            };
+            return _wrap(treeData, null);
+          }
+          Object.assign(layout, {
+            nodeSize(arg) {
+              return arguments.length
+                ? ((opts.nodeSize = arg), layout)
+                : opts.nodeSize;
+            },
+            spacing(arg) {
+              return arguments.length
+                ? ((opts.spacing = arg), layout)
+                : opts.spacing;
+            },
+            children(arg) {
+              return arguments.length
+                ? ((opts.children = arg), layout)
+                : opts.children;
+            },
+            hierarchy(treeData, children) {
+              const kids =
+                typeof children === "undefined" ? opts.children : children;
+              return wrap(getFlexNode(), treeData, kids);
+            },
+            dump(tree) {
+              const nodeSize = accessor("nodeSize");
+              const _dump = (i0) => (node) => {
+                const i1 = i0 + "  ";
+                const i2 = i0 + "    ";
+                const { x, y } = node;
+                const size = nodeSize(node);
+                const kids = node.children || [];
+                const kdumps =
+                  kids.length === 0
+                    ? " "
+                    : `,${i1}children: [${i2}${kids
+                        .map(_dump(i2))
+                        .join(i2)}${i1}],${i0}`;
+                return `{ size: [${size.join(
+                  ", "
+                )}],${i1}x: ${x}, y: ${y}${kdumps}},`;
+              };
+              return _dump("\n")(tree);
+            },
+          });
+          return layout;
+        }
+        flextree.version = version;
+        const layoutChildren = (w, y = 0) => {
+          w.y = y;
+          (w.children || []).reduce(
+            (acc, kid) => {
+              const [i, lastLows] = acc;
+              layoutChildren(kid, w.y + w.ySize);
+              const lowY = (i === 0 ? kid.lExt : kid.rExt).bottom;
+              if (i !== 0) separate(w, i, lastLows);
+              const lows = updateLows(lowY, i, lastLows);
+              return [i + 1, lows];
+            },
+            [0, null]
+          );
+          shiftChange(w);
+          positionRoot(w);
+          return w;
+        };
+        const resolveX = (w, prevSum, parentX) => {
+          if (typeof prevSum === "undefined") {
+            prevSum = -w.relX - w.prelim;
+            parentX = 0;
+          }
+          const sum = prevSum + w.relX;
+          w.relX = sum + w.prelim - parentX;
+          w.prelim = 0;
+          w.x = parentX + w.relX;
+          (w.children || []).forEach((k) => resolveX(k, sum, w.x));
+          return w;
+        };
+        const shiftChange = (w) => {
+          (w.children || []).reduce(
+            (acc, child) => {
+              const [lastShiftSum, lastChangeSum] = acc;
+              const shiftSum = lastShiftSum + child.shift;
+              const changeSum = lastChangeSum + shiftSum + child.change;
+              child.relX += changeSum;
+              return [shiftSum, changeSum];
+            },
+            [0, 0]
+          );
+        };
+        const separate = (w, i, lows) => {
+          const lSib = w.children[i - 1];
+          const curSubtree = w.children[i];
+          let rContour = lSib;
+          let rSumMods = lSib.relX;
+          let lContour = curSubtree;
+          let lSumMods = curSubtree.relX;
+          let isFirst = true;
+          while (rContour && lContour) {
+            if (rContour.bottom > lows.lowY) lows = lows.next;
+            const dist =
+              rSumMods +
+              rContour.prelim -
+              (lSumMods + lContour.prelim) +
+              rContour.xSize / 2 +
+              lContour.xSize / 2 +
+              rContour.spacing(lContour);
+            if (dist > 0 || (dist < 0 && isFirst)) {
+              lSumMods += dist;
+              moveSubtree(curSubtree, dist);
+              distributeExtra(w, i, lows.index, dist);
+            }
+            isFirst = false;
+            const rightBottom = rContour.bottom;
+            const leftBottom = lContour.bottom;
+            if (rightBottom <= leftBottom) {
+              rContour = nextRContour(rContour);
+              if (rContour) rSumMods += rContour.relX;
+            }
+            if (rightBottom >= leftBottom) {
+              lContour = nextLContour(lContour);
+              if (lContour) lSumMods += lContour.relX;
+            }
+          }
+          if (!rContour && lContour) setLThr(w, i, lContour, lSumMods);
+          else if (rContour && !lContour) setRThr(w, i, rContour, rSumMods);
+        };
+        const moveSubtree = (subtree, distance) => {
+          subtree.relX += distance;
+          subtree.lExtRelX += distance;
+          subtree.rExtRelX += distance;
+        };
+        const distributeExtra = (w, curSubtreeI, leftSibI, dist) => {
+          const curSubtree = w.children[curSubtreeI];
+          const n = curSubtreeI - leftSibI;
+          if (n > 1) {
+            const delta = dist / n;
+            w.children[leftSibI + 1].shift += delta;
+            curSubtree.shift -= delta;
+            curSubtree.change -= dist - delta;
+          }
+        };
+        const nextLContour = (w) => {
+          return w.hasChildren ? w.firstChild : w.lThr;
+        };
+        const nextRContour = (w) => {
+          return w.hasChildren ? w.lastChild : w.rThr;
+        };
+        const setLThr = (w, i, lContour, lSumMods) => {
+          const firstChild = w.firstChild;
+          const lExt = firstChild.lExt;
+          const curSubtree = w.children[i];
+          lExt.lThr = lContour;
+          const diff = lSumMods - lContour.relX - firstChild.lExtRelX;
+          lExt.relX += diff;
+          lExt.prelim -= diff;
+          firstChild.lExt = curSubtree.lExt;
+          firstChild.lExtRelX = curSubtree.lExtRelX;
+        };
+        const setRThr = (w, i, rContour, rSumMods) => {
+          const curSubtree = w.children[i];
+          const rExt = curSubtree.rExt;
+          const lSib = w.children[i - 1];
+          rExt.rThr = rContour;
+          const diff = rSumMods - rContour.relX - curSubtree.rExtRelX;
+          rExt.relX += diff;
+          rExt.prelim -= diff;
+          curSubtree.rExt = lSib.rExt;
+          curSubtree.rExtRelX = lSib.rExtRelX;
+        };
+        const positionRoot = (w) => {
+          if (w.hasChildren) {
+            const k0 = w.firstChild;
+            const kf = w.lastChild;
+            const prelim =
+              (k0.prelim +
+                k0.relX -
+                k0.xSize / 2 +
+                kf.relX +
+                kf.prelim +
+                kf.xSize / 2) /
+              2;
+            Object.assign(w, {
+              prelim,
+              lExt: k0.lExt,
+              lExtRelX: k0.lExtRelX,
+              rExt: kf.rExt,
+              rExtRelX: kf.rExtRelX,
+            });
+          }
+        };
+        const updateLows = (lowY, index, lastLows) => {
+          while (lastLows !== null && lowY >= lastLows.lowY)
+            lastLows = lastLows.next;
+          return {
+            lowY,
+            index,
+            next: lastLows,
+          };
+        };
+        const containerCSS =
+          "/* used for pre-rendering to get the size of each node */\n.markmap-container {\n  position: absolute;\n  width: 0;\n  height: 0;\n  top: -100px;\n  left: -100px;\n  overflow: hidden;\n}\n.markmap-container > .markmap-foreign {\n    display: inline-block;\n  }\n/* first-child for line wrapping, last-child for max-width detection */\n.markmap-container > .markmap-foreign > div:last-child,\n        \n        .markmap-container > .markmap-foreign > div:last-child :not(pre) {\n          white-space: nowrap;\n        }\n.markmap-container > .markmap-foreign > div:last-child code {\n          white-space: inherit;\n        }\n";
+        const css =
+          ".markmap {\n  --markmap-max-width: none;\n  --markmap-a-color: #0097e6;\n  --markmap-a-hover-color: #00a8ff;\n  --markmap-code-bg: #f0f0f0;\n  --markmap-code-color: #555;\n  --markmap-highlight-bg: #ffeaa7;\n  --markmap-table-border: 1px solid currentColor;\n  --markmap-font: 300 16px/20px sans-serif;\n\n  font: var(--markmap-font);\n}\n\n  .markmap-link {\n    fill: none;\n  }\n\n  .markmap-node > circle {\n      cursor: pointer;\n    }\n\n  .markmap-foreign {\n    display: inline-block;\n  }\n\n  .markmap-foreign a {\n      color: var(--markmap-a-color);\n    }\n\n  .markmap-foreign a:hover {\n        color: var(--markmap-a-hover-color);\n      }\n\n  .markmap-foreign code {\n      padding: 0.25em;\n      font-size: calc(1em - 2px);\n      color: var(--markmap-code-color);\n      background-color: var(--markmap-code-bg);\n      border-radius: 2px;\n    }\n\n  .markmap-foreign pre {\n      margin: 0;\n    }\n\n  .markmap-foreign pre > code {\n        display: block;\n      }\n\n  .markmap-foreign del {\n      text-decoration: line-through;\n    }\n\n  .markmap-foreign em {\n      font-style: italic;\n    }\n\n  .markmap-foreign strong {\n      font-weight: bold;\n    }\n\n  .markmap-foreign mark {\n      background: var(--markmap-highlight-bg);\n    }\n\n  .markmap-foreign table,\n    .markmap-foreign th,\n    .markmap-foreign td {\n      border-collapse: collapse;\n      border: var(--markmap-table-border);\n    }\n\n  .markmap-foreign img {\n      display: inline-block;\n    }\n\n  .markmap-foreign-testing-max {\n    max-width: var(--markmap-max-width);\n  }\n\n  .markmap-foreign-testing-max img {\n      max-width: var(--markmap-max-width);\n      max-height: none;\n    }\n";
+        const globalCSS = css;
+        function linkWidth(nodeData) {
+          const data = nodeData.data;
+          return Math.max(4 - 2 * data.state.depth, 1.5);
+        }
+        function minBy(numbers, by) {
+          const index = d32.minIndex(numbers, by);
+          return numbers[index];
+        }
+        function stopPropagation(e) {
+          e.stopPropagation();
+        }
+        const refreshHook = new Hook();
+        class Markmap {
+          constructor(svg, opts) {
+            this.options = defaultOptions;
+            this.revokers = [];
+            this.imgCache = {};
+            this.handleZoom = (e) => {
+              const { transform } = e;
+              this.g.attr("transform", transform);
+            };
+            this.handlePan = (e) => {
+              e.preventDefault();
+              const transform = d32.zoomTransform(this.svg.node());
+              const newTransform = transform.translate(
+                -e.deltaX / transform.k,
+                -e.deltaY / transform.k
+              );
+              this.svg.call(this.zoom.transform, newTransform);
+            };
+            this.handleClick = (e, d) => {
+              let recursive = this.options.toggleRecursively;
+              if (isMacintosh ? e.metaKey : e.ctrlKey) recursive = !recursive;
+              this.toggleNode(d.data, recursive);
+            };
+            this.svg = svg.datum ? svg : d32.select(svg);
+            this.styleNode = this.svg.append("style");
+            this.zoom = d32
+              .zoom()
+              .filter((event) => {
+                if (this.options.scrollForPan) {
+                  if (event.type === "wheel")
+                    return event.ctrlKey && !event.button;
+                }
+                return (
+                  (!event.ctrlKey || event.type === "wheel") && !event.button
+                );
+              })
+              .on("zoom", this.handleZoom);
+            this.setOptions(opts);
+            this.state = {
+              id: this.options.id || this.svg.attr("id") || getId(),
+              minX: 0,
+              maxX: 0,
+              minY: 0,
+              maxY: 0,
+            };
+            this.g = this.svg.append("g");
+            this.debouncedRefresh = debounce(() => this.setData(), 200);
+            this.revokers.push(
+              refreshHook.tap(() => {
+                this.setData();
+              })
+            );
+          }
+          getStyleContent() {
+            const { style } = this.options;
+            const { id } = this.state;
+            const styleText = typeof style === "function" ? style(id) : "";
+            return [this.options.embedGlobalCSS && css, styleText]
+              .filter(Boolean)
+              .join("\n");
+          }
+          updateStyle() {
+            this.svg.attr(
+              "class",
+              addClass(this.svg.attr("class"), "markmap", this.state.id)
+            );
+            const style = this.getStyleContent();
+            this.styleNode.text(style);
+          }
+          toggleNode(data, recursive = false) {
+            var _a, _b;
+            const fold = ((_a = data.payload) == null ? void 0 : _a.fold)
+              ? 0
+              : 1;
+            if (recursive) {
+              walkTree(data, (item, next) => {
+                item.payload = {
+                  ...item.payload,
+                  fold,
+                };
+                next();
+              });
+            } else {
+              data.payload = {
+                ...data.payload,
+                fold: ((_b = data.payload) == null ? void 0 : _b.fold) ? 0 : 1,
+              };
+            }
+            this.renderData(data);
+          }
+          initializeData(node) {
+            let nodeId = 0;
+            const { color, nodeMinHeight, maxWidth, initialExpandLevel } =
+              this.options;
+            const { id } = this.state;
+            const container = mountDom(
+              /* @__PURE__ */ jsx("div", {
+                className: `markmap-container markmap ${id}-g`,
+              })
+            );
+            const style = mountDom(
+              /* @__PURE__ */ jsx("style", {
+                children: [this.getStyleContent(), containerCSS].join("\n"),
+              })
+            );
+            document.body.append(container, style);
+            const groupStyle = maxWidth
+              ? `--markmap-max-width: ${maxWidth}px`
+              : "";
+            let foldRecursively = 0;
+            let depth = 0;
+            walkTree(node, (item, next, parent) => {
+              var _a, _b, _c;
+              depth += 1;
+              item.children =
+                (_a = item.children) == null
+                  ? void 0
+                  : _a.map((child) => ({ ...child }));
+              nodeId += 1;
+              const group = mountDom(
+                /* @__PURE__ */ jsx("div", {
+                  className: "markmap-foreign markmap-foreign-testing-max",
+                  style: groupStyle,
+                  children: /* @__PURE__ */ jsx("div", {
+                    dangerouslySetInnerHTML: { __html: item.content },
+                  }),
+                })
+              );
+              container.append(group);
+              item.state = {
+                ...item.state,
+                depth,
+                id: nodeId,
+                el: group.firstChild,
+              };
+              item.state.path = [
+                (_b = parent == null ? void 0 : parent.state) == null
+                  ? void 0
+                  : _b.path,
+                item.state.id,
+              ]
+                .filter(Boolean)
+                .join(".");
+              color(item);
+              const isFoldRecursively =
+                ((_c = item.payload) == null ? void 0 : _c.fold) === 2;
+              if (isFoldRecursively) {
+                foldRecursively += 1;
+              } else if (
+                foldRecursively ||
+                (initialExpandLevel >= 0 &&
+                  item.state.depth >= initialExpandLevel)
+              ) {
+                item.payload = { ...item.payload, fold: 1 };
+              }
+              next();
+              if (isFoldRecursively) foldRecursively -= 1;
+              depth -= 1;
+            });
+            const nodes = Array.from(container.childNodes).map(
+              (group) => group.firstChild
+            );
+            this._checkImages(container);
+            nodes.forEach((node2) => {
+              var _a;
+              (_a = node2.parentNode) == null
+                ? void 0
+                : _a.append(node2.cloneNode(true));
+            });
+            walkTree(node, (item, next, parent) => {
+              var _a;
+              const state = item.state;
+              const rect = state.el.getBoundingClientRect();
+              item.content = state.el.innerHTML;
+              state.size = [
+                Math.ceil(rect.width) + 1,
+                Math.max(Math.ceil(rect.height), nodeMinHeight),
+              ];
+              state.key =
+                [
+                  (_a = parent == null ? void 0 : parent.state) == null
+                    ? void 0
+                    : _a.id,
+                  state.id,
+                ]
+                  .filter(Boolean)
+                  .join(".") + // FIXME: find a way to check content hash
+                item.content;
+              next();
+            });
+            container.remove();
+            style.remove();
+          }
+          _checkImages(container) {
+            container.querySelectorAll("img").forEach((img) => {
+              if (img.width) return;
+              const size = this.imgCache[img.src];
+              if (size == null ? void 0 : size[0]) {
+                [img.width, img.height] = size;
+              } else if (!size) {
+                this._loadImage(img.src);
+              }
+            });
+          }
+          _loadImage(src) {
+            this.imgCache[src] = [0, 0];
+            const img = new Image();
+            img.src = src;
+            img.onload = () => {
+              this.imgCache[src] = [img.naturalWidth, img.naturalHeight];
+              this.debouncedRefresh();
+            };
+          }
+          setOptions(opts) {
+            this.options = {
+              ...this.options,
+              ...opts,
+            };
+            if (this.options.zoom) {
+              this.svg.call(this.zoom);
+            } else {
+              this.svg.on(".zoom", null);
+            }
+            if (this.options.pan) {
+              this.svg.on("wheel", this.handlePan);
+            } else {
+              this.svg.on("wheel", null);
+            }
+          }
+          setData(data, opts) {
+            if (opts) this.setOptions(opts);
+            if (data) this.state.data = data;
+            if (!this.state.data) return;
+            this.initializeData(this.state.data);
+            this.updateStyle();
+            this.renderData();
+          }
+          renderData(originData) {
+            if (!this.state.data) return;
+            const {
+              spacingHorizontal,
+              paddingX,
+              spacingVertical,
+              autoFit,
+              color,
+            } = this.options;
+            const layout = flextree({})
+              .children((d) => {
+                var _a;
+                if (!((_a = d.payload) == null ? void 0 : _a.fold))
+                  return d.children;
+              })
+              .nodeSize((node2) => {
+                const [width, height] = node2.data.state.size;
+                return [
+                  height,
+                  width + (width ? paddingX * 2 : 0) + spacingHorizontal,
+                ];
+              })
+              .spacing((a, b) => {
+                return a.parent === b.parent
+                  ? spacingVertical
+                  : spacingVertical * 2;
+              });
+            const tree = layout.hierarchy(this.state.data);
+            layout(tree);
+            const descendants = tree.descendants().reverse();
+            const links = tree.links();
+            const linkShape = d32.linkHorizontal();
+            const minX = d32.min(descendants, (d) => d.x - d.xSize / 2);
+            const maxX = d32.max(descendants, (d) => d.x + d.xSize / 2);
+            const minY = d32.min(descendants, (d) => d.y);
+            const maxY = d32.max(
+              descendants,
+              (d) => d.y + d.ySize - spacingHorizontal
+            );
+            Object.assign(this.state, {
+              minX,
+              maxX,
+              minY,
+              maxY,
+            });
+            if (autoFit) this.fit();
+            const origin =
+              (originData &&
+                descendants.find((item) => item.data === originData)) ||
+              tree;
+            const x0 = origin.data.state.x0 ?? origin.x;
+            const y0 = origin.data.state.y0 ?? origin.y;
+            const node = this.g
+              .selectAll(childSelector("g"))
+              .data(descendants, (d) => d.data.state.key);
+            const nodeEnter = node
+              .enter()
+              .append("g")
+              .attr("data-depth", (d) => d.data.state.depth)
+              .attr("data-path", (d) => d.data.state.path)
+              .attr(
+                "transform",
+                (d) =>
+                  `translate(${y0 + origin.ySize - d.ySize},${
+                    x0 + origin.xSize / 2 - d.xSize
+                  })`
+              );
+            const nodeExit = this.transition(node.exit());
+            nodeExit
+              .select("line")
+              .attr("x1", (d) => d.ySize - spacingHorizontal)
+              .attr("x2", (d) => d.ySize - spacingHorizontal);
+            nodeExit.select("foreignObject").style("opacity", 0);
+            nodeExit
+              .attr(
+                "transform",
+                (d) =>
+                  `translate(${origin.y + origin.ySize - d.ySize},${
+                    origin.x + origin.xSize / 2 - d.xSize
+                  })`
+              )
+              .remove();
+            const nodeMerge = node.merge(nodeEnter).attr("class", (d) => {
+              var _a;
+              return [
+                "markmap-node",
+                ((_a = d.data.payload) == null ? void 0 : _a.fold) &&
+                  "markmap-fold",
+              ]
+                .filter(Boolean)
+                .join(" ");
+            });
+            this.transition(nodeMerge).attr(
+              "transform",
+              (d) => `translate(${d.y},${d.x - d.xSize / 2})`
+            );
+            const line = nodeMerge
+              .selectAll(childSelector("line"))
+              .data(
+                (d) => [d],
+                (d) => d.data.state.key
+              )
+              .join(
+                (enter) => {
+                  return enter
+                    .append("line")
+                    .attr("x1", (d) => d.ySize - spacingHorizontal)
+                    .attr("x2", (d) => d.ySize - spacingHorizontal);
+                },
+                (update) => update,
+                (exit) => exit.remove()
+              );
+            this.transition(line)
+              .attr("x1", -1)
+              .attr("x2", (d) => d.ySize - spacingHorizontal + 2)
+              .attr("y1", (d) => d.xSize)
+              .attr("y2", (d) => d.xSize)
+              .attr("stroke", (d) => color(d.data))
+              .attr("stroke-width", linkWidth);
+            const circle = nodeMerge
+              .selectAll(childSelector("circle"))
+              .data(
+                (d) => {
+                  var _a;
+                  return ((_a = d.data.children) == null ? void 0 : _a.length)
+                    ? [d]
+                    : [];
+                },
+                (d) => d.data.state.key
+              )
+              .join(
+                (enter) => {
+                  return enter
+                    .append("circle")
+                    .attr("stroke-width", "1.5")
+                    .attr("cx", (d) => d.ySize - spacingHorizontal)
+                    .attr("cy", (d) => d.xSize)
+                    .attr("r", 0)
+                    .on("click", (e, d) => this.handleClick(e, d))
+                    .on("mousedown", stopPropagation);
+                },
+                (update) => update,
+                (exit) => exit.remove()
+              );
+            this.transition(circle)
+              .attr("r", 6)
+              .attr("cx", (d) => d.ySize - spacingHorizontal)
+              .attr("cy", (d) => d.xSize)
+              .attr("stroke", (d) => color(d.data))
+              .attr("fill", (d) => {
+                var _a;
+                return ((_a = d.data.payload) == null ? void 0 : _a.fold) &&
+                  d.data.children
+                  ? color(d.data)
+                  : "#fff";
+              });
+            const foreignObject = nodeMerge
+              .selectAll(childSelector("foreignObject"))
+              .data(
+                (d) => [d],
+                (d) => d.data.state.key
+              )
+              .join(
+                (enter) => {
+                  const fo = enter
+                    .append("foreignObject")
+                    .attr("class", "markmap-foreign")
+                    .attr("x", paddingX)
+                    .attr("y", 0)
+                    .style("opacity", 0)
+                    .on("mousedown", stopPropagation)
+                    .on("dblclick", stopPropagation);
+                  fo.append("xhtml:div")
+                    .select(function select2(d) {
+                      const clone = d.data.state.el.cloneNode(true);
+                      this.replaceWith(clone);
+                      return clone;
+                    })
+                    .attr("xmlns", "http://www.w3.org/1999/xhtml");
+                  return fo;
+                },
+                (update) => update,
+                (exit) => exit.remove()
+              )
+              .attr("width", (d) =>
+                Math.max(0, d.ySize - spacingHorizontal - paddingX * 2)
+              )
+              .attr("height", (d) => d.xSize);
+            this.transition(foreignObject).style("opacity", 1);
+            const path = this.g
+              .selectAll(childSelector("path"))
+              .data(links, (d) => d.target.data.state.key)
+              .join(
+                (enter) => {
+                  const source = [
+                    y0 + origin.ySize - spacingHorizontal,
+                    x0 + origin.xSize / 2,
+                  ];
+                  return enter
+                    .insert("path", "g")
+                    .attr("class", "markmap-link")
+                    .attr("data-depth", (d) => d.target.data.state.depth)
+                    .attr("data-path", (d) => d.target.data.state.path)
+                    .attr("d", linkShape({ source, target: source }));
+                },
+                (update) => update,
+                (exit) => {
+                  const source = [
+                    origin.y + origin.ySize - spacingHorizontal,
+                    origin.x + origin.xSize / 2,
+                  ];
+                  return this.transition(exit)
+                    .attr("d", linkShape({ source, target: source }))
+                    .remove();
+                }
+              );
+            this.transition(path)
+              .attr("stroke", (d) => color(d.target.data))
+              .attr("stroke-width", (d) => linkWidth(d.target))
+              .attr("d", (d) => {
+                const origSource = d.source;
+                const origTarget = d.target;
+                const source = [
+                  origSource.y + origSource.ySize - spacingHorizontal,
+                  origSource.x + origSource.xSize / 2,
+                ];
+                const target = [
+                  origTarget.y,
+                  origTarget.x + origTarget.xSize / 2,
+                ];
+                return linkShape({ source, target });
+              });
+            descendants.forEach((d) => {
+              d.data.state.x0 = d.x;
+              d.data.state.y0 = d.y;
+            });
+          }
+          transition(sel) {
+            const { duration } = this.options;
+            return sel.transition().duration(duration);
+          }
+          /**
+           * Fit the content to the viewport.
+           */
+          async fit() {
+            const svgNode = this.svg.node();
+            const { width: offsetWidth, height: offsetHeight } =
+              svgNode.getBoundingClientRect();
+            const { fitRatio } = this.options;
+            const { minX, maxX, minY, maxY } = this.state;
+            const naturalWidth = maxY - minY;
+            const naturalHeight = maxX - minX;
+            const scale = Math.min(
+              (offsetWidth / naturalWidth) * fitRatio,
+              (offsetHeight / naturalHeight) * fitRatio,
+              2
+            );
+            const initialZoom = d32.zoomIdentity
+              .translate(
+                (offsetWidth - naturalWidth * scale) / 2 - minY * scale,
+                (offsetHeight - naturalHeight * scale) / 2 - minX * scale
+              )
+              .scale(scale);
+            return this.transition(this.svg)
+              .call(this.zoom.transform, initialZoom)
+              .end()
+              .catch(noop);
+          }
+          findElement(node) {
+            let result;
+            this.g.selectAll(childSelector("g")).each(function walk(d) {
+              if (d.data === node) {
+                result = {
+                  data: d,
+                  g: this,
+                };
+              }
+            });
+            return result;
+          }
+          /**
+           * Pan the content to make the provided node visible in the viewport.
+           */
+          async ensureView(node, padding) {
+            var _a;
+            const itemData =
+              (_a = this.findElement(node)) == null ? void 0 : _a.data;
+            if (!itemData) return;
+            const svgNode = this.svg.node();
+            const { spacingHorizontal } = this.options;
+            const relRect = svgNode.getBoundingClientRect();
+            const transform = d32.zoomTransform(svgNode);
+            const [left, right] = [
+              itemData.y,
+              itemData.y + itemData.ySize - spacingHorizontal + 2,
+            ].map((x) => x * transform.k + transform.x);
+            const [top, bottom] = [
+              itemData.x - itemData.xSize / 2,
+              itemData.x + itemData.xSize / 2,
+            ].map((y) => y * transform.k + transform.y);
+            const pd = {
+              left: 0,
+              right: 0,
+              top: 0,
+              bottom: 0,
+              ...padding,
+            };
+            const dxs = [pd.left - left, relRect.width - pd.right - right];
+            const dys = [pd.top - top, relRect.height - pd.bottom - bottom];
+            const dx =
+              dxs[0] * dxs[1] > 0 ? minBy(dxs, Math.abs) / transform.k : 0;
+            const dy =
+              dys[0] * dys[1] > 0 ? minBy(dys, Math.abs) / transform.k : 0;
+            if (dx || dy) {
+              const newTransform = transform.translate(dx, dy);
+              return this.transition(this.svg)
+                .call(this.zoom.transform, newTransform)
+                .end()
+                .catch(noop);
+            }
+          }
+          /**
+           * Scale content with it pinned at the center of the viewport.
+           */
+          async rescale(scale) {
+            const svgNode = this.svg.node();
+            const { width: offsetWidth, height: offsetHeight } =
+              svgNode.getBoundingClientRect();
+            const halfWidth = offsetWidth / 2;
+            const halfHeight = offsetHeight / 2;
+            const transform = d32.zoomTransform(svgNode);
+            const newTransform = transform
+              .translate(
+                ((halfWidth - transform.x) * (1 - scale)) / transform.k,
+                ((halfHeight - transform.y) * (1 - scale)) / transform.k
+              )
+              .scale(scale);
+            return this.transition(this.svg)
+              .call(this.zoom.transform, newTransform)
+              .end()
+              .catch(noop);
+          }
+          destroy() {
+            this.svg.on(".zoom", null);
+            this.svg.html(null);
+            this.revokers.forEach((fn) => {
+              fn();
+            });
+          }
+          static create(svg, opts, data = null) {
+            const mm = new Markmap(svg, opts);
+            if (data) {
+              mm.setData(data);
+              mm.fit();
+            }
+            return mm;
+          }
+        }
+        exports.Markmap = Markmap;
+        exports.defaultColorFn = defaultColorFn;
+        exports.defaultOptions = defaultOptions;
+        exports.deriveOptions = deriveOptions;
+        exports.globalCSS = globalCSS;
+        exports.isMacintosh = isMacintosh;
+        exports.loadCSS = loadCSS;
+        exports.loadJS = loadJS;
+        exports.refreshHook = refreshHook;
+        Object.defineProperty(exports, Symbol.toStringTag, { value: "Module" });
+      })((this.markmap = this.markmap || {}), d3);
+    </script>
+  </body>
+</html>
