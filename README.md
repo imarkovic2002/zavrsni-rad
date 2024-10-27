@@ -7,7 +7,7 @@ Ovaj projekt predstavlja završni rad pod nazivom **"Razvoj web aplikacije za po
 Projekt je podijeljen u nekoliko dijelova:
 
 - **Prezentacija:** [Markovic Igor 2024-prezentacija-zavrsni rad.pdf](./Markovic%20Igor%202024-prezentacija-zavrsni%20rad.pdf)
-- **Dokumentacija:** [Dokumentacija završnog rada](./dokumentacija.pdf)
+- **Dokumentacija:** [dokumentacija.pdf](./dokumentacija.pdf)
 - **Link na aplikaciju:** https://mapodoro.netlify.app/
 ## Korištene tehnologije
 - **HTML**
